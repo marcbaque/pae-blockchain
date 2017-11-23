@@ -1,123 +1,163 @@
-pragma solidity ^0.4.15;
+import "./Organizer.sol";
+import "./Ownable.sol";
+//import "./TicketToken.sol";
 
-import "./EventContract.sol";
-
-
-contract Event {
+contract Event is Ownable {
     
-    address owner; 
+    enum EventStatus {Pending, Accepted, OnGoing, Finished, Success, Fail, Frozen}
+    enum OrganizerStatus {Pending, Accepted, Success, Fail}
+    enum PayStatus {Disabled, Enabled, Paid}
+    
+    event Frozen(string cause);
+    
     uint public id;
-    string public name;
-    string public description;
-
-    address[] public organizers;
-    EventStatus public eventStatus;
-
-    mapping(address => EventContract) userMapContract;
-    mapping(address => bool) contractMapRegistered;
-    address[] contracts;
+    string public date;
+    string public duration;
+    
+    EventStatus eventStatus;
+    
+    address[] organizers;
+    mapping(address => uint) orgMapPercentage;
+    mapping(address => EventStatus) orgMapStatus;
+    mapping(address => PayStatus) orgMapPayStatus;
     
     
+    address ticketAddress;
     
-    function Event(address _owner, uint _id, string _name, string _description) {
-        owner = _owner; //owner = User
-        organizers.push(owner);
-        name = _name;
-        description = _description;
-    }
+ 
     
-    // Enums
-    
-    enum EventStatus {Pending, Accepted, OnGoing, Finished}
-    
-    
-    //Modifiers
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
-    modifier onlyInStatus(EventStatus requiredStatus) {
-        require(eventStatus == requiredStatus);
-        _;
-    }
-    modifier onlyOrganizers() {
+    function Event(address _owner, uint _id, address[] _organizers, uint[] _percentage, string _date, string _duration/*, TicketToken _ticket*/) Ownable(_owner){
+        require(_organizers.length == _percentage.length);
+        
+        id = _id;
+        date = _date;
+        duration = _duration;
+        organizers = _organizers;
+        
         for(uint i = 0; i < organizers.length; i++) {
-            if(organizers[i] == msg.sender) {
-                _;
+            address organizer = organizers[i];
+            orgMapPercentage[organizer] = _percentage[i]; 
+            orgMapStatus[organizer] = EventStatus.Pending;
+            orgMapPayStatus[organizer] = PayStatus.Disabled;
+        }
+        
+        eventStatus = EventStatus.Pending;
+        
+    }
+    
+    
+    
+    function accept() {
+        require(isEventOrganizer(msg.sender));
+        require(orgMapStatus[msg.sender]==EventStatus.Pending);
+        orgMapStatus[msg.sender]==EventStatus.Accepted;
+        
+        if(organizersMatch(EventStatus.Accepted)) {
+            eventStatus = EventStatus.Accepted;
+        }
+    }
+    
+    function start() {
+        //Todo: Check is automatically called. 
+        require(eventStatus == EventStatus.Accepted);
+        //Todo: check now >= date
+        eventStatus = EventStatus.OnGoing;
+
+    }
+    
+    function end() {
+        //Todo: Check is automatically called. 
+        require(eventStatus == EventStatus.OnGoing);
+        //Todo: check now >= date + duration
+        eventStatus = EventStatus.Finished;
+        
+    }
+    
+    function success(bool eventSuccess) {
+        //Todo: check eventSuccess not null
+        require(isEventOrganizer(msg.sender));
+        require(orgMapStatus[msg.sender]==EventStatus.Accepted 
+                /*|| orgMapStatus[msg.sender]==EventStatus.Fail
+                  || orgMapStatus[msg.sender]==EventStatus.Accepted*/);
+                  
+        if(eventSuccess) orgMapStatus[msg.sender] = EventStatus.Success;
+        else orgMapStatus[msg.sender] = EventStatus.Fail;
+        
+        if(!organizersVotedSuccessStatus()) {
+            //Log("Todavia no han votado todos los organizadores")
+            //Todo: Tener en cuenta que alguien no vote
+            return;   
+        }
+        
+        if(true /*votingTimeEnded()*/) {
+            if(organizersMatch(EventStatus.Success)) {
+                if(true/*&& clientsHappy()*/) {
+                    eventStatus = EventStatus.Success;
+                    enablePayment();
+                } else {
+                    eventStatus = EventStatus.Frozen;
+                    Frozen("Clients were not happy :(");
+                }
+                
+            } else if (organizersMatch(EventStatus.Fail)) {
+                eventStatus = EventStatus.Fail;
+                enableClientsRefund();
+            } else {
+                eventStatus = EventStatus.Frozen;
+                Frozen("Organizers disagreement.");
             }
         }
-        revert();
-    }
-    modifier onlyInPending() {
-        require(eventStatus == EventStatus.Pending);
-        _;
-    }
-    modifier onlyInAccepted() {
-        require(eventStatus == EventStatus.Accepted);
-        _;
-    }
-    modifier onlyInOnGoing() {
-        require(eventStatus == EventStatus.OnGoing);
-        _;
+        
     }
     
-    //Events
+    function askPayment() {
+        require(isEventOrganizer(msg.sender)); 
+        require(orgMapPayStatus[msg.sender] == PayStatus.Enabled);
+        //BSToken.transfer(this, msg.sender)
+        orgMapPayStatus[msg.sender] = PayStatus.Paid;
+    }
     
-    event StatusChanged(EventStatus newEventStatus);    
+    function enablePayment() internal {
+        //TODO: Add Modifier onlySuccess
+        for(uint i = 0; i < organizers.length; i++) {
+            orgMapPayStatus[organizers[i]] = PayStatus.Enabled;
+        }
+    }
     
+    function enableClientsRefund() internal {
+        //TODO
+    }
     
-    //Functions
-    
-    
-    function addContractWith(address eventContractAddress, address newOrganizer) onlyOwner returns (bool) {
-        organizers.push(newOrganizer);
-        EventContract eventContract = EventContract(eventContractAddress);
-        userMapContract[newOrganizer] = eventContract;
-        contractMapRegistered[eventContract] = true;
-        contracts.push(eventContract);
+    function organizersMatch(EventStatus newStatus) internal constant returns (bool) {
+        for(uint i = 0; i < organizers.length; i++) {
+            if(orgMapStatus[organizers[i]] != newStatus) {
+                return false;
+            }
+        }
         return true;
     }
-
-    function getOwner() constant onlyOrganizers returns (address) {
-        return owner;
+    
+    function organizersVotedSuccessStatus() internal constant returns (bool) {
+        for(uint i = 0; i < organizers.length; i++) {
+            if(orgMapStatus[organizers[i]] != EventStatus.Success
+               && orgMapStatus[organizers[i]] != EventStatus.Fail) {
+                return false;
+            }
+        }
+        return true;
     }
     
-    function getNumberOfContracts() constant onlyOwner returns (uint)  {
-        return contracts.length;
-    }
-    function getContractByPosition(uint pos) constant returns (address) {
-        return contracts[pos];
-    }
-    function getAllContracts() onlyOwner returns (address[]) {
-        return contracts;
-    }
-    function getContractByContractor(address contractor) onlyOwner returns (EventContract) {
-        return userMapContract[contractor];
-    }
-    function getMyContract() constant onlyOrganizers returns(EventContract) {
-        return userMapContract[msg.sender];
-    }
-    function changeEventStatus(EventStatus newEventStatus) internal {
-        eventStatus = newEventStatus;
-        //StatusChanged(eventStatus);
-    }
-
-    //Ahora mismo hacemos esto porque suponemos solo un contrato. Cuando haya mas habra
-    //que hacer un mapping de estados por contrato y esta funcion cambiara el estado del contrato
-    //en concreto. Se mirara si todos los contratos tienen lo mismo y hacia adelante.
-
-    function updateEventStatusFromContract(address eventContractAddress) onlyOrganizers {
-        EventContract eventContract = EventContract(eventContractAddress);
-        EventContract.ContractStatus conStatus =  eventContract.getContractStatus();
-
-        if(conStatus == EventContract.ContractStatus.Accepted) {
-            changeEventStatus(EventStatus.Accepted);
+    function isEventOrganizer(address _organizer) constant returns (bool) {
+        for(uint i = 0; i < organizers.length; i++) {
+            if(organizers[i] == _organizer) {
+                return true;
+            }
         }
-
-
+        return false;
     }
-
-
+    
+    
+    
+    
     
 }

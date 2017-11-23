@@ -1,33 +1,19 @@
-pragma solidity ^0.4.15;
+import "./Ownable.sol";
 
-contract User {
+contract User is Ownable {
     
-    address owner;
-    uint public id;
-    string public name;
-    string phone;
-    string email;
-
+    bytes32 id;
     
-    function User(address _owner, uint _id, string _name, string _phone, string _email) {
+    
+    function User(address _owner, bytes32 _id) Ownable(_owner) {
         owner = _owner;
         id = _id;
-        name = _name;
-        phone = _phone;
-        email = _email;
     }
     
-    //Modifiers
-    
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
+    function getId() constant returns (bytes32) {
+        return id;
     }
     
-    //Functions
     
-    function changeEmail(string newEmail) onlyOwner {
-        email = newEmail;
-    }
     
 }
