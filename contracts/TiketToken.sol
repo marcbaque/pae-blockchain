@@ -18,6 +18,8 @@ contract TicketToken {
 
     }
 
+    function numberTicketsUser (address _user) constant returns (uint) { return userTicketMap[_user];  }
+
     function assignTickets(address _to, uint _number) {
 
         if (available - _number > 0) { userTicketMap[_to] += _number;  available -= _number; }
