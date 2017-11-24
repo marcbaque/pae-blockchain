@@ -5,11 +5,11 @@ contract TicketToken {
     uint public quantity;
     uint public available;
     uint public value;
-    string public ticket_type;
+    bytes32 public ticket_type;
 
     mapping(address => uint) userTicketMap;
 
-    function TicketToken (uint _quantity, uint _value, string _ticket_type) {
+    function TicketToken (uint _quantity, uint _value, bytes32 _ticket_type) {
 
         quantity = _quantity;
         available = _quantity;
