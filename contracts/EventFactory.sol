@@ -1,5 +1,6 @@
 import "./Ownable.sol";
 import "./Event.sol";
+import "./TicketToken.sol";
 
 contract EventFactory is Ownable {
     
@@ -9,12 +10,13 @@ contract EventFactory is Ownable {
         
     }
     
-    function createEvent(address[] organizers, uint[] percentage, string date, string duration, uint ticketPrice) returns (address) {
+    
+    function createEvent(address[] organizers, uint[] percentage, string date, string duration, uint capacity, uint ticketPrice) returns (address) {
                             
         //Add parameters: fecha, lista de organizadores 
         //Todo: Add modifier onlyOrganizers() -> need to have UserFactory?
-        //TicketToken ticket = new TicketToken(price...);
-        Event newEvent = new Event(msg.sender, events.length, organizers, percentage, date, duration /*, ticket*/);
+        TicketToken ticket = new TicketToken(capacity, ticketPrice, "Regular");
+        Event newEvent = new Event(msg.sender, events.length, organizers, percentage, date, duration, ticket);
         events.push(newEvent);
         return newEvent;
     }

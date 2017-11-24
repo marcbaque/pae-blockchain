@@ -9,6 +9,7 @@ let ef;
 let artists = [];
 
 let art1;
+let art2;
 let createdEvent;
 
 let testLog;
@@ -77,9 +78,9 @@ contract("Test", function(accounts) {
             //testLog += "Artists array:  " + artists + "\n";
             
         });
-
+        
         let createdArtist = await uf.createArtist("Furi Helium", "666", "furihelium@gmail.com", {from: accounts[1]});
-        setTimeout( () => artistCreated.stopWatching(), 2000);
+        setTimeout( () => artistCreated.stopWatching(), 5000);
         await uf.createArtist("Elias' band", "777", "eliasmola@gmail.com", {from: accounts[2]});
     });
 
@@ -119,18 +120,14 @@ contract("Test", function(accounts) {
         
     });
 
-    /* 
-        it("artist1 should be able to add artist2 as an organizer of the event", function() {
-
-        return Artist.at(artists[2]).
-        then(function(_art2) {
-            art2 = _art2
-            return art1.addOrganizerToEvent(createdEvent, art2);
-        }).then(function(bool) {
-            return createdEvent.organizers.call(0);
-        }).then(function(_eventOrganizer1) {
-            eventOrganizer1 = _eventOrganizer1;
-            testLog += "Event organizer 2: " + eventOrganizer2);
-        }) */
+    
+    it("artist1 should be able to add artist2 as an organizer of the event", async function() {
+        art2 = await Artist.at(artists[2]);
+        await art1.addOrganizerToEvent(createdEvent, art2);
+        let eventOrganizer1 = await createdEvent.organizers.call(0);
+        let eventOrganizer2 = await createdEvent.organizers.call(1);
+        console.log("Event organizer 1: " + eventOrganizer1);
+        console.log("Event organizer 2: " + eventOrganizer2);
+    });
      
 });

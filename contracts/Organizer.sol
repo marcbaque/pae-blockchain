@@ -17,8 +17,8 @@ contract Organizer is User {
     } 
     
     function createEvent(address[] organizers, uint[] percentage, string date, 
-                        string duration, uint ticketPrice) {
-        address newEvent = eventFactory.createEvent(organizers, percentage, date, duration, ticketPrice);
+                        string duration, uint capacity, uint ticketPrice) {
+        address newEvent = eventFactory.createEvent(organizers, percentage, date, duration, capacity, ticketPrice);
         events.push(newEvent);
         EventCreated(newEvent, events.length-1);
     }

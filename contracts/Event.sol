@@ -26,7 +26,7 @@ contract Event is Ownable {
     
  
     
-    function Event(address _owner, uint _id, address[] _organizers, uint[] _percentage, string _date, string _duration/*, TicketToken _ticket*/) Ownable(_owner){
+    function Event(address _owner, uint _id, address[] _organizers, uint[] _percentage, string _date, string _duration, TicketToken _ticket) Ownable(_owner){
         require(_organizers.length == _percentage.length);
         
         id = _id;
