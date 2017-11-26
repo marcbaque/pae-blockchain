@@ -7,11 +7,11 @@ contract TicketToken is Ownable {
     uint public quantity;
     uint public available;
     uint public value;
-    bytes32 public ticket_type;
+    string public ticket_type;
 
     mapping(address => uint) userTicketMap;
 
-    function TicketToken (uint _quantity, uint _value, bytes32 _ticket_type) Ownable(msg.sender) {
+    function TicketToken (uint _quantity, uint _value, string _ticket_type) Ownable(msg.sender) {
 
         quantity = _quantity;
         available = _quantity;
