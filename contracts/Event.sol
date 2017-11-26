@@ -1,6 +1,6 @@
 import "./Organizer.sol";
 import "./Ownable.sol";
-//import "./TicketToken.sol";
+import "./TicketToken.sol";
 
 contract Event is Ownable {
     
@@ -15,7 +15,10 @@ contract Event is Ownable {
     uint public id;
     string public date;
     string public duration;
-    
+    uint public redButton;
+    bool redButtonEnabled;
+    bool votingResultEnabled;
+
     EventStatus eventStatus;
     
     address[] organizers;
@@ -61,6 +64,10 @@ contract Event is Ownable {
         }
 
         eventStatus = EventStatus.Pending;
+        redButton = 0;
+
+        redButtonEnabled = false;
+        votingResultEnabled = false;
         
     }
 
@@ -85,7 +92,9 @@ contract Event is Ownable {
 
     function pending() isEventOrganizer {
 
-        require(orgMapStatus[msg.sender] == OrganizerStatus.Accepted && eventStatus < EventStatus.Accepted);
+        require(orgMapStatus[msg.sender] == OrganizerStatus.Accepted 
+                && eventStatus == EventStatus.Pending);
+
         orgMapStatus[msg.sender] = OrganizerStatus.Pending;
 
     } 
@@ -112,6 +121,7 @@ contract Event is Ownable {
         require(eventStatus == EventStatus.Accepted);
         //Todo: check now >= date
         eventStatus = EventStatus.OnGoing;
+        redButtonEnabled = true;
 
     }
     
@@ -120,7 +130,7 @@ contract Event is Ownable {
         require(eventStatus == EventStatus.OnGoing);
         //Todo: check now >= date + duration
         eventStatus = EventStatus.Finished;
-        
+        votingResultEnabled = true; 
     }
     
     function success(bool eventSuccess) isEventOrganizer canVoteResult {
@@ -131,36 +141,42 @@ contract Event is Ownable {
             orgMapStatus[msg.sender] = OrganizerStatus.Fail;
         }
         
-        if(!organizersVotedEventResult()) {
-            //Log("Todavia no han votado todos los organizadores")
-            //Todo: Tener en cuenta que alguien no vote
-            return;   
-        }
-        
-        if(true /*votingTimeEnded()*/) {
-            if(organizersMatch(OrganizerStatus.Success)) {
-                if(true/*&& clientsHappy()*/) {
-                    eventStatus = EventStatus.Success;
-                    enablePayment();
-                } else {
-                    eventStatus = EventStatus.Frozen;
-                    Frozen("Clients were not happy :(");
-                }
-                
-            } else if (organizersMatch(OrganizerStatus.Fail)) {
-                eventStatus = EventStatus.Fail;
-                enableClientRefund();
+    } 
+
+    function resolveSuccess() {
+        //Triggered automatically
+        require(!votingResultEnabled && eventStatus == EventStatus.Finished);
+
+        if(organizersMatch(OrganizerStatus.Success)) {
+
+            if(clientsAreHappy()) {
+                eventStatus = EventStatus.Success;
+                enablePayment();
             } else {
                 eventStatus = EventStatus.Frozen;
-                Frozen("Organizers disagreement.");
+                Frozen("Clients were not happy :(");
             }
+            
+        } else if (organizersMatch(OrganizerStatus.Fail)) {
+            eventStatus = EventStatus.Fail;
+            enableClientRefund();
+        } else {
+            eventStatus = EventStatus.Frozen;
+            Frozen("Organizers disagreement.");
         }
-        
-    } //Todo: Finish the method and any auxiliar method needed.
+    }
 
-    function resolveFrozen() {
+    function resolveFrozen(bytes32 result) {
 
-    } //Todo
+        if(result == "SUCCESS") {
+            eventStatus = EventStatus.Success;
+            enablePayment();
+        } else if (result == "FAIL") {
+            eventStatus = EventStatus.Fail;
+            enableClientRefund();
+        } 
+
+    } 
 
     /************************************************************************************* 
      *  Payments and Refunds Functions
@@ -222,6 +238,7 @@ contract Event is Ownable {
         || orgMapStatus[msg.sender]==OrganizerStatus.Fail 
         || orgMapStatus[msg.sender]==OrganizerStatus.Accepted);
 
+        require(votingResultEnabled);
         _;
     }
 
@@ -256,5 +273,15 @@ contract Event is Ownable {
             }
         }
         return true;
+    }
+
+    function endVotingTime() {
+        votingResultEnabled = false;
+        redButtonEnabled = false;
+    }
+
+
+    function clientsAreHappy() constant returns (bool) {
+        return (redButton*100/clients.length < 30);
     }
 }
