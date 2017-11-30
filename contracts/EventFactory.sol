@@ -1,3 +1,5 @@
+pragma solidity ^0.4.18;
+
 import "./Ownable.sol";
 import "./Event.sol";
 import "./TicketToken.sol";
@@ -5,20 +7,23 @@ import "./TicketToken.sol";
 contract EventFactory is Ownable {
     
     address[] events;
+
+    event eventCreated(address eventAddress, address owner);
     
-    function EventFactory() Ownable(msg.sender) {
-        
+    function EventFactory() Ownable(msg.sender) {        
     }
     
     
-    function createEvent(address[] organizers, uint[] percentage, string date, string duration, uint capacity, uint ticketPrice) returns (address) {
+    function createEvent() returns (address) {
                             
-        //Add parameters: fecha, lista de organizadores 
-        //Todo: Add modifier onlyOrganizers() -> need to have UserFactory?
-        TicketToken ticket = new TicketToken(capacity, ticketPrice, "Regular");
-        Event newEvent = new Event(msg.sender, events.length, organizers, percentage, date, duration, ticket);
+        //TODO: Add modifier onlyOrganizers() -> need to have UserFactory?
+
+        Event newEvent = new Event(msg.sender, events.length);
         events.push(newEvent);
+        eventCreated(newEvent, msg.sender);
         return newEvent;
+
+
     }
     
 }
