@@ -1,7 +1,7 @@
 pragma solidity ^0.4.15;
 
-import './SafeMath.sol';
-import './Pausable.sol';
+import './../math/SafeMath.sol';
+import './../lifecycle/Pausable.sol';
 
 /**
  * @title TicketToken
