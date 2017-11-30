@@ -1,93 +1,31 @@
-pragma solidity ^0.4.15;
+import "./BasicUser.sol";
+import "./Organizer.sol";
+import "./Ownable.sol";
 
-import "./User.sol";
-import "./Artist.sol";
-import "./EventFactory.sol";
-
-contract UserFactory {
+contract UserFactory is Ownable {
     
-    address owner;
-    EventFactory public eventFactory;
+    mapping(bytes32 => address) public idMapUser;
 
-    enum OrganizationEnum {None, Artist, Venue}
-
-    mapping(address => address) ownerMapUser; 
-    mapping(address => OrganizationEnum) userMapOrganization;
-    mapping(string => bool) phoneMapRegistered;
-
-    User[] public userList;
-    Artist[] public artistList;
-
-    event artistCreated(address artistAddress, uint length); 
-
-    function UserFactory () {
-        owner = msg.sender;
-    }
-
-    function initializeEventFactory(address eventFactoryAddress) onlyOwner {
-        EventFactory ef = EventFactory(eventFactoryAddress);
-        eventFactory = ef;
-    } 
-    // Modfiers
     
-    modifier isNotRegistered(string _phone) {
-        require(ownerMapUser[msg.sender] == 0 && phoneMapRegistered[_phone]==false);
-        _;
+    event basicUserCreated(address buAddress, address owner);
+    event organizerCreated(address organizerAddress, address owner);
+
+    function UserFactory() Ownable(msg.sender) {
+        
     }
     
-    modifier onlyOwner() {
-        require(msg.sender == owner);
-        _;
-    }
+    function createBasicUser(address owner, bytes32 id) {
+        BasicUser bu = new BasicUser(owner, id);
+        idMapUser[id] = bu;
 
-    
-    //Functions
-    function createBasicUser(string _name, string _phone, string _email) isNotRegistered(_phone) returns (User) {
-
-        //En un futuro quizas interese hacer otro modifier: registrationAllowed. De manera que desde frontend se le 
-        //indique al usuario algun codigo y si este lo indica pues entonces los admin puedan decir: este numero de telefono
-        //puede ahora si registrarse
-
-        User user = new User(msg.sender,userList.length, _name, _phone, _email);
-
-        ownerMapUser[msg.sender] = user;
-        phoneMapRegistered[_phone] = true;
-        userMapOrganization[user] = OrganizationEnum.None;
-        userList.push(user);
-
-        return user;
+        basicUserCreated(bu, owner);
     }
     
+    function createOrganizer(bytes32 id) {
+        Organizer org = new Organizer(msg.sender, id);
+        idMapUser[id] = org;
 
-    function createArtist(string _name, string _phone, string _email) isNotRegistered(_phone) returns (Artist) {
-        Artist artist = new Artist(msg.sender,userList.length, _name, _phone, _email, eventFactory);
-
-        ownerMapUser[msg.sender] = artist;
-        phoneMapRegistered[_phone] = true;
-        userMapOrganization[artist] = OrganizationEnum.Artist;
-
-        userList.push(artist); 
-        artistList.push(artist);
-
-        artistCreated(artist, userList.length);
-
-        return artist;
-    }
-
-    function getMyUser() constant returns (address) {
-        return ownerMapUser[msg.sender];
-    } 
-    
-    function getUserById(uint id) constant returns (User userAddress, OrganizationEnum userOrganizationType) {
-        return (userList[id], userMapOrganization[userList[id]]);
-    }
-    
-    function isOrganization(address userAddress /*User Contract Address, Not the Pk of the owner of the User*/) returns (bool) {
-        if (userMapOrganization[userAddress] != OrganizationEnum.None) {
-            return true;
-        } else {
-            return false;
-        }
+        organizerCreated(org, msg.sender);
     }
     
 }
