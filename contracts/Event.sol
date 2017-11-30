@@ -9,10 +9,6 @@ contract Event is Ownable {
     enum EventStatus {Pending, Accepted, Opened, OnGoing, Finished, Success, Failed, Frozen, Cancelled}
     enum OrganizerStatus {Pending, Accepted, Success, Failed}
 
-    //Permisions.
-    bool paymentEnabled;
-    bool refundEnabled;
-
     // Events to watch from Artistic Island
     event EventStatusChanged(uint8 status);
     
@@ -54,8 +50,6 @@ contract Event is Ownable {
         
         id = _id;
         eventStatus = EventStatus.Pending;
-        paymentEnabled = false;
-        refundEnabled = false;
         
     }
 
@@ -136,6 +130,7 @@ contract Event is Ownable {
         eventStatus = EventStatus.Cancelled;
         EventStatusChanged(EventStatus.Cancelled);
     } 
+
     function open() {
         require(eventStatus == EventStatus.Accepted);
         eventStatus = EventStatus.Opened;
@@ -167,8 +162,18 @@ contract Event is Ownable {
         }
     }
 
-    function resolveSuccess() onlyInStatus(EventStatus.Finished) {
+    function redButton() isClient {
+        if (clientInfo[msg.sender].redButton) {
+            clientInfo[msg.sender].redButton = false;
+        } else {
+            clientInfo[msg.sender].redButton = true;
+        }
+    }
+
+    function resolveSuccess(uint32 unixTime) onlyInStatus(EventStatus.Finished) {
         //Called by admin auto: date + duration + 1 hours;
+        require(unixTime > date + duration + 45 minutes);
+
         if(organizersMatch(OrganizerStatus.Success)) {
             if(clientsAreHappy()) {
                 eventStatus = EventStatus.Success;
@@ -207,13 +212,13 @@ contract Event is Ownable {
     } //Todo: Every BSToken Functionality
 
     function askRefund() canGetRefund {
-        // uint refund = 0;
-        // for(uint i = 0; i < tickets.length; i++) {
-        //     TicketToken ticket = TicketToken(tickets[i]);
-        //     refund += ticket.numberTicketsUser(msg.sender) * ticket.value();
-        // }
+        uint refund = 0;
+        for(uint i = 0; i < tickets.length; i++) {
+            TicketToken ticket = tickets[i];
+            refund += uint(ticket.numberTicketsUser(msg.sender)) * uint(ticket.value());
+        }
         //bsToken.transfer(this, msg.sender, refund)
-        clientMapRefundStatus[msg.sender] = RefundStatus.Paid;
+        clientInfo[msg.sender].refunded = true;
     } //Todo: Every BSToken Functionality
     
     /************************************************************************************* 
@@ -226,6 +231,11 @@ contract Event is Ownable {
     }
     modifier isEventOrganizer() {
         require(validOrganizer(msg.sender));
+        _;
+    }
+
+    modifier isClient() {
+        require(clientInfo[msg.sender].exists);
         _;
     }
 
@@ -270,11 +280,10 @@ contract Event is Ownable {
     }
 
     function organizersMatch(OrganizerStatus newStatus) internal constant returns (bool) {
-        for(uint i = 0; i < organizers.length; i++) {
-            if(organizerInfo[organizers[i]].status != newStatus) {
+        for (uint i = 0; i < organizers.length; i++) 
+            if(organizerInfo[organizers[i]].status != newStatus) 
                 return false;
-            }
-        }
+    
         return true;
     }
     
