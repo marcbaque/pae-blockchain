@@ -3,7 +3,10 @@ import "./EventFactory.sol";
 
 contract Organizer is User {
     
-    address[] events;
+    mapping(uint => address) public events;
+    uint[] public eventIds; // https://ethereum.stackexchange.com/questions/15337/can-we-get-all-elements-stored-in-a-mapping-in-the-contract
+    uint eventsSize;
+
     EventFactory eventFactory;
     
     event EventCreated(address newEvent, uint position);
@@ -16,36 +19,32 @@ contract Organizer is User {
         eventFactory = EventFactory(eventFactoryAddress);
     } 
     
-    function createEvent(address[] organizers, uint[] percentage, string date, 
-                        string duration, uint capacity, uint ticketPrice) {
+    function createEvent(address[] organizers, uint[] percentage,
+                        string date, string duration, uint capacity, uint ticketPrice) {
+
         address newEvent = eventFactory.createEvent(organizers, percentage, date, duration, capacity, ticketPrice);
-        events.push(newEvent);
+        events[eventsSize] = newEvent;
+        eventIds.push(eventsSize);
+        eventsSize = eventsSize + 1;
         EventCreated(newEvent, events.length-1);
     }
     
-    function getEvent(uint pos) onlyOwner constant returns(address) {
-        return events[pos];
-    }
-
-    
-    function accept(address eventAddress) onlyOwner {
+    function acceptEvent(address eventAddress) onlyOwner {
         Event e = Event(eventAddress);
         e.accept();
     }
-    
-    
-    function success(address eventAddress, bool eventSuccess) onlyOwner {
-        Event e = Event(eventAddress);
-        e.success(eventSuccess);
-    }
-    
 
-    
+    function cancelEvent(address eventAddress) onlyOwner {
+        Event e = Event(eventAddress);
+        e.cancel();
+    }
+
+    function setResult(result) {
+        // Que era esto?
+    }
+
     function askPayment(address eventAddress) onlyOwner {
         Event e = Event(eventAddress);
         e.askPayment();
     }
-    
-    
-    
 }
