@@ -1,90 +1,111 @@
 import "./Organizer.sol";
+import "./BasicUser.sol";
 import "./Ownable.sol";
-import "./TicketToken.sol";
+//import "./TicketToken.sol";
 
 contract Event is Ownable {
     
-    enum EventStatus {Pending, Accepted, OnGoing, Finished, Success, Fail, Frozen, Cancelled}
-    enum OrganizerStatus {Pending, Accepted, Success, Fail}
-    enum PayStatus {Disabled, Enabled, Paid}
-    enum RefundStatus {Disabled, Enabled, Paid}
-    
-    event EventStatusChanged(string status);
-    event Frozen(string cause);
-    
-    uint public id;
-    string public date;
-    string public duration;
-    uint public redButton;
-    bool redButtonEnabled;
-    bool votingResultEnabled;
+    //enum EventStatus{Pending, Accepted, Open, OnGoing, Finished, Success, Failed, Frozen, Cancelled}
+    enum EventStatus {Pending, Accepted, Opened, OnGoing, Finished, Success, Failed, Frozen, Cancelled}
+    enum OrganizerStatus {Pending, Accepted, Success, Failed}
 
+    //Permisions.
+    bool paymentEnabled;
+    bool refundEnabled;
+
+    // Events to watch from Artistic Island
+    event EventStatusChanged(uint8 status);
+    
+    // Event Information
+    uint public id;             
+    uint public date;           //Unix time is a 32 bits variable, but 'now' is defined as uint.
+    uint public duration;
     EventStatus eventStatus;
     
-    address[] organizers;
+    //Organizers Information.
+    Organizer[] organizers;
+    mapping(address => OrganizerInfo) organizerInfo;
 
-    mapping(address => uint) orgMapPercentage;
-    mapping(address => OrganizerStatus) orgMapStatus;
-    mapping(address => PayStatus) orgMapPayStatus;          //To check if they can get paid, or they were already paid.
+    struct OrganizerInfo {
+        bool exists;
+        OrganizerStatus status;
+        uint16 percentage;
+        bool paid;
+    }
 
-    address[] clients;
-    mapping(address => RefundStatus) clientMapRefundStatus;    //To check if they can be refunded, or they already were.
-    
+    //Clients Information.
+    BasicUser[] clients;
+    mapping(address => ClientInfo) clientInfo;
 
-    address[] tickets;
-    mapping(bytes32 => address) ticketMap;
+    struct ClientInfo {
+        bool exists;
+        bool redButton;
+        bool refunded;
+        //mapping(uint8 => uint8) ticketsBought;
+    }
+
+    //Tickets.
+    TicketToken[] tickets;
+    mapping(uint8 => TicketToken) ticketMap;
     
  
     
-    function Event(address _owner, uint _id, 
-                   address[] _organizers, uint[] _percentage, 
-                   string _date, string _duration, 
-                   uint[] _ticketQuantity, uint[] _ticketValue, bytes32[] _ticketType) Ownable(_owner) {
+    function Event(address _owner, uint _id) Ownable(_owner) {
         
-        require(_organizers.length == _percentage.length);
-        require(_ticketQuantity.length == _ticketValue.length && _ticketQuantity.length == _ticketType.length);
-
         id = _id;
+        eventStatus = EventStatus.Pending;
+        paymentEnabled = false;
+        refundEnabled = false;
+        
+    }
+
+    /************************************************************************************* 
+     *  Initialization
+     */
+
+    function initializeDate(uint _date, uint _duration) {
         date = _date;
         duration = _duration;
-        organizers = _organizers;
-        
-        for(uint i = 0; i < organizers.length; i++) {
-            address organizer = organizers[i];
-            orgMapPercentage[organizer] = _percentage[i]; 
-            orgMapStatus[organizer] = OrganizerStatus.Pending;
-            orgMapPayStatus[organizer] = PayStatus.Disabled;
-        }
+    }
 
-        for(i = 0; i < _ticketQuantity.length; i++) {
-            bytes32 ticketType = _ticketType[i];
-            TicketToken ticket = new TicketToken(_ticketQuantity[i], _ticketValue[i], ticketType);
-            tickets.push(ticket);
-            ticketMap[ticketType] = ticket;
-        }
+    function addOrganizer(Organizer organizer, uint16 percentage) onlyOwner onlyInStatus(EventStatus.Pending) {
+        organizers.push(organizer);
+        bool paid = false;
+        organizerInfo[organizer] = OrganizerInfo(true, OrganizerStatus.Pending, percentage, paid);
+    }
 
-        eventStatus = EventStatus.Pending;
-        redButton = 0;
-
-        redButtonEnabled = false;
-        votingResultEnabled = false;
-        
+    function addTicket(uint8 ticketType, uint16 price, uint16 quantity) onlyOwner onlyInStatus(EventStatus.Pending) {
+        TicketToken ticket = new TicketToken(quantity, price, ticketType);
+        tickets.push(ticket);
+        ticketMap[ticketType] = ticket;
     }
 
     /************************************************************************************* 
      *  Ticket Functions
      */
-    function buyTickets(bytes32 ticketType, uint amount) eventStatusIs(EventStatus.Accepted) {
-        TicketToken ticket = TicketToken(ticketMap[ticketType]);
+    function buyTickets(uint8 ticketType, uint8 amount) onlyInStatus(EventStatus.Accepted) {
+        TicketToken ticket = ticketMap[ticketType];
+        //uint16 price = ticket.value() * amount;
+        //Check bsToken.balanceOf(msg.sender) >= price;
+        //bsToken.transfer(msg.sender, this, price);
+
         ticket.assignTickets(msg.sender, amount);
         clients.push(msg.sender);
-        clientMapRefundStatus[msg.sender] = RefundStatus.Disabled;
+        clientInfo[msg.sender] = ClientInfo(true, false, false);
     }
 
-    function getTicket(bytes32 ticketType) constant returns (address) {
-        return ticketMap[ticketType];
+    function resellTickets() {
+        //Todo: After MVP. 
     }
 
+    function useTicket(uint8 ticketType) {
+        require(eventStatus == EventStatus.Opened || eventStatus == EventStatus.OnGoing);
+        require(clientInfo[msg.sender].exists);
+
+        TicketToken ticket = ticketMap[ticketType];
+        require(ticket.numberTicketsUser(msg.sender) > 0);
+        ticket.useTicket(msg.sender);
+    }
 
     /************************************************************************************* 
      * Status Functions
@@ -92,36 +113,41 @@ contract Event is Ownable {
 
     function pending() isEventOrganizer {
 
-        require(orgMapStatus[msg.sender] == OrganizerStatus.Accepted 
-                && eventStatus == EventStatus.Pending);
-
-        orgMapStatus[msg.sender] = OrganizerStatus.Pending;
+        require(organizerInfo[msg.sender].status == OrganizerStatus.Accepted && eventStatus == EventStatus.Pending);
+        organizerInfo[msg.sender].status = OrganizerStatus.Pending;
 
     } 
 
     function accept() isEventOrganizer {
 
-        require(orgMapStatus[msg.sender] == OrganizerStatus.Pending);
-        orgMapStatus[msg.sender] = OrganizerStatus.Accepted;
+        require(organizerInfo[msg.sender].status == OrganizerStatus.Pending);
+        organizerInfo[msg.sender].status = OrganizerStatus.Accepted;
         
         if(organizersMatch(OrganizerStatus.Accepted)) {
             eventStatus = EventStatus.Accepted;
         }
+
+        EventStatusChanged(EventStatus.Accepted);
 
     } 
     
     function cancel() onlyOwner {
         require(eventStatus <= EventStatus.Accepted);
         eventStatus = EventStatus.Cancelled;
-        enableClientRefund();
+        EventStatusChanged(EventStatus.Cancelled);
     } 
+    function open() {
+        require(eventStatus == EventStatus.Accepted);
+        eventStatus = EventStatus.Opened;
+        EventStatusChanged(EventStatus.Opened);
+    }
 
     function start() {
         //Todo: Check is automatically called. 
-        require(eventStatus == EventStatus.Accepted);
+        require(eventStatus == EventStatus.Opened);
         //Todo: check now >= date
         eventStatus = EventStatus.OnGoing;
-        redButtonEnabled = true;
+        EventStatusChanged(EventStatus.OnGoing);
 
     }
     
@@ -130,75 +156,55 @@ contract Event is Ownable {
         require(eventStatus == EventStatus.OnGoing);
         //Todo: check now >= date + duration
         eventStatus = EventStatus.Finished;
-        votingResultEnabled = true; 
+        
     }
     
-    function success(bool eventSuccess) isEventOrganizer canVoteResult {
-                  
+    function success(bool eventSuccess) isEventOrganizer canVoteResult {           
         if(eventSuccess) {
-            orgMapStatus[msg.sender] = OrganizerStatus.Success;
+            organizerInfo[msg.sender].status = OrganizerStatus.Success;
         } else { 
-            orgMapStatus[msg.sender] = OrganizerStatus.Fail;
-        }
-        
-    } 
-
-    function resolveSuccess() {
-        //Triggered automatically
-        require(!votingResultEnabled && eventStatus == EventStatus.Finished);
-
-        if(organizersMatch(OrganizerStatus.Success)) {
-
-            if(clientsAreHappy()) {
-                eventStatus = EventStatus.Success;
-                enablePayment();
-            } else {
-                eventStatus = EventStatus.Frozen;
-                Frozen("Clients were not happy :(");
-            }
-            
-        } else if (organizersMatch(OrganizerStatus.Fail)) {
-            eventStatus = EventStatus.Fail;
-            enableClientRefund();
-        } else {
-            eventStatus = EventStatus.Frozen;
-            Frozen("Organizers disagreement.");
+            organizerInfo[msg.sender].status = OrganizerStatus.Failed;
         }
     }
 
-    function resolveFrozen(bytes32 result) {
+    function resolveSuccess() onlyInStatus(EventStatus.Finished) {
+        //Called by admin auto: date + duration + 1 hours;
+        if(organizersMatch(OrganizerStatus.Success)) {
+            if(clientsAreHappy()) {
+                eventStatus = EventStatus.Success;
+                EventStatusChanged(EventStatus.Success);
+            } else {
+                eventStatus = EventStatus.Frozen;
+                EventStatusChanged(EventStatus.Frozen);
+            }
+        } else if (organizersMatch(OrganizerStatus.Failed)) {
+            eventStatus = EventStatus.Failed;
+            EventStatusChanged(EventStatus.Failed);
+        } else {
+            eventStatus = EventStatus.Frozen;
+            EventStatusChanged(EventStatus.Frozen);
+        }
+    }
 
-        if(result == "SUCCESS") {
+    function resolveFrozen(bool success) {
+        if (success) {
             eventStatus = EventStatus.Success;
-            enablePayment();
-        } else if (result == "FAIL") {
-            eventStatus = EventStatus.Fail;
-            enableClientRefund();
-        } 
-
+            EventStatusChanged(EventStatus.Success);
+        } else {
+            eventStatus = EventStatus.Failed;
+            EventStatusChanged(EventStatus.Failed);
+        }
     } 
 
     /************************************************************************************* 
      *  Payments and Refunds Functions
      */
 
-    function enablePayment() internal {
-        for(uint i = 0; i < organizers.length; i++) {
-            orgMapPayStatus[organizers[i]] = PayStatus.Enabled;
-        }
-    } 
-
     function askPayment() isEventOrganizer canGetPaid {
         //uint payment = bsToken.balanceOf(this)*orgMapPercentage[msg.sender]; //aprox.
         //bsToken.transfer(this, msg.sender, payment)
-        orgMapPayStatus[msg.sender] = PayStatus.Paid;
+        organizerInfo[msg.sender].paid = true;
     } //Todo: Every BSToken Functionality
-
-    function enableClientRefund() internal {
-        for(uint i = 0; i < clients.length; i++) {
-            clientMapRefundStatus[clients[i]] = RefundStatus.Enabled;
-        }
-    } 
 
     function askRefund() canGetRefund {
         // uint refund = 0;
@@ -214,7 +220,7 @@ contract Event is Ownable {
      *  Modifiers
      */
 
-    modifier eventStatusIs(EventStatus evStatus) {
+    modifier onlyInStatus(EventStatus evStatus) {
         require(eventStatus == evStatus);
         _;
     }
@@ -224,21 +230,24 @@ contract Event is Ownable {
     }
 
     modifier canGetPaid() {
-        require(orgMapPayStatus[msg.sender] == PayStatus.Enabled);
+        require(eventStatus == EventStatus.Success);
+        require(!organizerInfo[msg.sender].paid);
         _;
     }
 
      modifier canGetRefund() {
-        require(clientMapRefundStatus[msg.sender] == RefundStatus.Enabled);
+        require(eventStatus == EventStatus.Failed || eventStatus == EventStatus.Cancelled);
+        require(clientInfo[msg.sender].exists);
+        require(!clientInfo[msg.sender].refunded);
         _;
     }
 
     modifier canVoteResult() {
-        require(orgMapStatus[msg.sender]==OrganizerStatus.Accepted 
-        || orgMapStatus[msg.sender]==OrganizerStatus.Fail 
-        || orgMapStatus[msg.sender]==OrganizerStatus.Accepted);
+        require(eventStatus == EventStatus.Finished);
+        require(organizerInfo[msg.sender].status==OrganizerStatus.Accepted 
+        || organizerInfo[msg.sender].status==OrganizerStatus.Failed 
+        || organizerInfo[msg.sender].status==OrganizerStatus.Accepted);
 
-        require(votingResultEnabled);
         _;
     }
 
@@ -248,17 +257,21 @@ contract Event is Ownable {
      */
     
     function validOrganizer(address _organizer) constant returns (bool) {
-        for(uint i = 0; i < organizers.length; i++) {
-            if(organizers[i] == _organizer) {
-                return true;
-            }
-        }
-        return false;
+        return organizerInfo[_organizer].exists;
+    }
+
+    function clientsAreHappy() constant returns (bool) {
+        uint16 redButton = 0;
+        for (uint8 i = 0; i < clients.length; i++) 
+            if (clientInfo[clients[i]].redButton) 
+                redButton++;
+        
+        return (redButton * 100 / clients.length < 30);  
     }
 
     function organizersMatch(OrganizerStatus newStatus) internal constant returns (bool) {
         for(uint i = 0; i < organizers.length; i++) {
-            if(orgMapStatus[organizers[i]] != newStatus) {
+            if(organizerInfo[organizers[i]].status != newStatus) {
                 return false;
             }
         }
@@ -267,21 +280,11 @@ contract Event is Ownable {
     
     function organizersVotedEventResult() internal constant returns (bool) {
         for(uint i = 0; i < organizers.length; i++) {
-            if(orgMapStatus[organizers[i]] != OrganizerStatus.Success
-               && orgMapStatus[organizers[i]] != OrganizerStatus.Fail) {
+            OrganizerStatus organizerStatus = organizerInfo[organizers[i]].status;
+            if(!(organizerStatus == OrganizerStatus.Success || organizerStatus == OrganizerStatus.Failed)) {
                 return false;
             }
         }
         return true;
-    }
-
-    function endVotingTime() {
-        votingResultEnabled = false;
-        redButtonEnabled = false;
-    }
-
-
-    function clientsAreHappy() constant returns (bool) {
-        return (redButton*100/clients.length < 30);
     }
 }
