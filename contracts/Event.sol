@@ -1,7 +1,7 @@
 import "./Organizer.sol";
 import "./BasicUser.sol";
 import "./Ownable.sol";
-//import "./TicketToken.sol";
+import "./TicketToken.sol";
 
 contract Event is Ownable {
     
@@ -19,11 +19,11 @@ contract Event is Ownable {
     EventStatus eventStatus;
     
     //Organizers Information.
-    Organizer[] organizers;
+    Organizer[] public organizers;
     mapping(address => OrganizerInfo) organizerInfo;
 
     struct OrganizerInfo {
-        bool exists;
+        //address addd;
         OrganizerStatus status;
         uint16 percentage;
         bool paid;
@@ -34,10 +34,8 @@ contract Event is Ownable {
     mapping(address => ClientInfo) clientInfo;
 
     struct ClientInfo {
-        bool exists;
         bool redButton;
         bool refunded;
-        //mapping(uint8 => uint8) ticketsBought;
     }
 
     //Tickets.
@@ -47,114 +45,123 @@ contract Event is Ownable {
  
     
     function Event(address _owner, uint _id) Ownable(_owner) {
-        
+        //Change Ownable, with  Artistic Island and Creator.
         id = _id;
         eventStatus = EventStatus.Pending;
-        
     }
+
 
     /************************************************************************************* 
      *  Initialization
      */
 
-    function initializeDate(uint _date, uint _duration) {
+    function initializeDate(uint _date, uint _duration) isOwner onlyWhen(EventStatus.Pending) {
         date = _date;
         duration = _duration;
     }
 
-    function addOrganizer(Organizer organizer, uint16 percentage) onlyOwner onlyInStatus(EventStatus.Pending) {
+    function addOrganizer(Organizer organizer, uint16 percentage) onlyOwner onlyWhen(EventStatus.Pending) {
         organizers.push(organizer);
         bool paid = false;
         organizerInfo[organizer] = OrganizerInfo(true, OrganizerStatus.Pending, percentage, paid);
     }
 
-    function addTicket(uint8 ticketType, uint16 price, uint16 quantity) onlyOwner onlyInStatus(EventStatus.Pending) {
+    function addTicket(uint8 ticketType, uint16 price, uint16 quantity) onlyOwner onlyWhen(EventStatus.Pending) {
         TicketToken ticket = new TicketToken(quantity, price, ticketType);
         tickets.push(ticket);
         ticketMap[ticketType] = ticket;
     }
 
+
     /************************************************************************************* 
      *  Ticket Functions
      */
-    function buyTickets(uint8 ticketType, uint8 amount) onlyInStatus(EventStatus.Accepted) {
+    function getTicketInformation(uint8 ticketType) constant returns (uint8, uint16, uint16, uint16) {
+        Ticket ticket = ticketMap[ticketType];
+        //Should return:
+            //TicketType
+            //Price
+            //Number of tickets in total
+            //Number of tickets available
+        return (ticket.ticketType(), ticket.value(), ticket.cap(), ticket.totalSupply() /*+ ticket.totalResell()?*/);
+    }
+    function buyTickets(uint8 ticketType, uint8 amount) onlyWhen(EventStatus.Accepted) {
+        //Should check the msg.sender is a BasicUser
         TicketToken ticket = ticketMap[ticketType];
         //uint16 price = ticket.value() * amount;
         //Check bsToken.balanceOf(msg.sender) >= price;
         //bsToken.transfer(msg.sender, this, price);
 
         ticket.assignTickets(msg.sender, amount);
-        clients.push(msg.sender);
-        clientInfo[msg.sender] = ClientInfo(true, false, false);
+
+        if (!clientExists(msg.sender)) {
+            clients.push(msg.sender);
+            clientInfo[msg.sender] = ClientInfo(false, false);    
+        }
+        
     }
 
-    function resellTickets() {
-        //Todo: After MVP. 
+    function resellTickets(uint8 ticketType, uint16 amount) onlyClient onlyWhen(EventStatus.Accepted){
+        Ticket ticket = ticketMap[ticketType];
+        ticket.approve(msg.sender, amount);
     }
 
-    function useTicket(uint8 ticketType) {
+    function refundFromResell() onlyClient {
+        //Todo. Need to know number of tickets resold. 
+        //Maybe add a mapping(BasicUser => moneyResell) in each ticket?
+    }
+
+    function useTicket(uint8 ticketType) onlyClient onlyDuring([EventStatus.Opened, EventStatus.OnGoing]) {
         require(eventStatus == EventStatus.Opened || eventStatus == EventStatus.OnGoing);
-        require(clientInfo[msg.sender].exists);
-
         TicketToken ticket = ticketMap[ticketType];
-        require(ticket.numberTicketsUser(msg.sender) > 0);
         ticket.useTicket(msg.sender);
     }
+
 
     /************************************************************************************* 
      * Status Functions
      */
 
-    function pending() isEventOrganizer {
+    function pending() onlyOrganizer onlyWhen(EventStatus.Pending) {
 
-        require(organizerInfo[msg.sender].status == OrganizerStatus.Accepted && eventStatus == EventStatus.Pending);
+        require(organizerInfo[msg.sender].status == OrganizerStatus.Accepted);
         organizerInfo[msg.sender].status = OrganizerStatus.Pending;
 
     } 
 
-    function accept() isEventOrganizer {
+    function accept() onlyOrganizer onlyWhen(EventStatus.Pending) {
 
         require(organizerInfo[msg.sender].status == OrganizerStatus.Pending);
         organizerInfo[msg.sender].status = OrganizerStatus.Accepted;
         
         if(organizersMatch(OrganizerStatus.Accepted)) {
             eventStatus = EventStatus.Accepted;
+            EventStatusChanged(EventStatus.Accepted);
         }
-
-        EventStatusChanged(EventStatus.Accepted);
-
     } 
     
-    function cancel() onlyOwner {
-        require(eventStatus <= EventStatus.Accepted);
+    function cancel() onlyOwner onlyDuring([EventStatus.Pending, EventStatus.Accepted]) {
         eventStatus = EventStatus.Cancelled;
         EventStatusChanged(EventStatus.Cancelled);
     } 
 
-    function open() {
-        require(eventStatus == EventStatus.Accepted);
+    function open() onlyWhen(EventStatus.Accepted) {
         eventStatus = EventStatus.Opened;
         EventStatusChanged(EventStatus.Opened);
     }
 
-    function start() {
-        //Todo: Check is automatically called. 
-        require(eventStatus == EventStatus.Opened);
-        //Todo: check now >= date
+    function start() onlyWhen(EventStatus.Opened) {
         eventStatus = EventStatus.OnGoing;
         EventStatusChanged(EventStatus.OnGoing);
-
     }
     
-    function end() {
-        //Todo: Check is automatically called. 
-        require(eventStatus == EventStatus.OnGoing);
-        //Todo: check now >= date + duration
+    function end() onlyWhen(EventStatus.OnGoing) {
         eventStatus = EventStatus.Finished;
+        EventStatusChanged(EventStatus.Finished);
         
     }
     
-    function success(bool eventSuccess) isEventOrganizer canVoteResult {           
+    function success(bool eventSuccess) onlyOrganizer onlyWhen(EventStatus.Finished) {           
         if(eventSuccess) {
             organizerInfo[msg.sender].status = OrganizerStatus.Success;
         } else { 
@@ -162,7 +169,7 @@ contract Event is Ownable {
         }
     }
 
-    function redButton() isClient {
+    function redButton() onlyClient onlyDuring([EventStatus.OnGoing, EventStatus.Finished]) {
         if (clientInfo[msg.sender].redButton) {
             clientInfo[msg.sender].redButton = false;
         } else {
@@ -170,9 +177,8 @@ contract Event is Ownable {
         }
     }
 
-    function resolveSuccess(uint32 unixTime) onlyInStatus(EventStatus.Finished) {
-        //Called by admin auto: date + duration + 1 hours;
-        require(unixTime > date + duration + 45 minutes);
+    function resolveSuccess(uint32 unixTime) onlyWhen(EventStatus.Finished) {
+        require(unixTime > date + duration + 1 hours);
 
         if(organizersMatch(OrganizerStatus.Success)) {
             if(clientsAreHappy()) {
@@ -191,7 +197,7 @@ contract Event is Ownable {
         }
     }
 
-    function resolveFrozen(bool success) {
+    function resolveFrozen(bool success) onlyWhen(EventStatus.Frozen) {
         if (success) {
             eventStatus = EventStatus.Success;
             EventStatusChanged(EventStatus.Success);
@@ -201,41 +207,59 @@ contract Event is Ownable {
         }
     } 
 
+
     /************************************************************************************* 
      *  Payments and Refunds Functions
      */
 
-    function askPayment() isEventOrganizer canGetPaid {
-        //uint payment = bsToken.balanceOf(this)*orgMapPercentage[msg.sender]; //aprox.
+    function askPayment() onlyOrganizer canGetPaid {
+        //uint payment = bsToken.balanceOf(this)*organizerInfo[msg.sender].percentage / 100; //aprox.
         //bsToken.transfer(this, msg.sender, payment)
         organizerInfo[msg.sender].paid = true;
     } //Todo: Every BSToken Functionality
 
-    function askRefund() canGetRefund {
+    function askRefund() onlyClient canGetRefund {
         uint refund = 0;
         for(uint i = 0; i < tickets.length; i++) {
             TicketToken ticket = tickets[i];
-            refund += uint(ticket.numberTicketsUser(msg.sender)) * uint(ticket.value());
+            refund += uint(ticket.numberTicketsUser(msg.sender)) * uint(ticket.value());    
         }
         //bsToken.transfer(this, msg.sender, refund)
         clientInfo[msg.sender].refunded = true;
     } //Todo: Every BSToken Functionality
     
+
     /************************************************************************************* 
      *  Modifiers
      */
 
-    modifier onlyInStatus(EventStatus evStatus) {
+    modifier onlyWhen(EventStatus evStatus) {
         require(eventStatus == evStatus);
         _;
     }
-    modifier isEventOrganizer() {
+
+    modifier onlyDuring(EventStatus[] status) {
+        bool match = false;
+        for(uint8 i = 0; i < status.length; i++) {
+            if(eventStatus == status[i]) {
+                match = true;
+                break;
+            }
+        }
+        if(!match) {
+            revert()
+        } else {
+            _;
+        }
+    }
+
+    modifier onlyOrganizer() {
         require(validOrganizer(msg.sender));
         _;
     }
 
-    modifier isClient() {
-        require(clientInfo[msg.sender].exists);
+    modifier onlyClient() {
+        require(clientExists(msg.sender));
         _;
     }
 
@@ -252,22 +276,13 @@ contract Event is Ownable {
         _;
     }
 
-    modifier canVoteResult() {
-        require(eventStatus == EventStatus.Finished);
-        require(organizerInfo[msg.sender].status==OrganizerStatus.Accepted 
-        || organizerInfo[msg.sender].status==OrganizerStatus.Failed 
-        || organizerInfo[msg.sender].status==OrganizerStatus.Accepted);
-
-        _;
-    }
-
     
     /************************************************************************************* 
      *  Auxiliar Functions
      */
     
-    function validOrganizer(address _organizer) constant returns (bool) {
-        return organizerInfo[_organizer].exists;
+    function validOrganizer(address organizer) constant returns (bool) {
+        return organizerInfo[organizer].exists;
     }
 
     function clientsAreHappy() constant returns (bool) {
@@ -279,21 +294,20 @@ contract Event is Ownable {
         return (redButton * 100 / clients.length < 30);  
     }
 
-    function organizersMatch(OrganizerStatus newStatus) internal constant returns (bool) {
+    function organizersMatch(OrganizerStatus status) internal constant returns (bool) {
         for (uint i = 0; i < organizers.length; i++) 
-            if(organizerInfo[organizers[i]].status != newStatus) 
+            if(organizerInfo[organizers[i]].status != status) 
                 return false;
     
         return true;
     }
     
-    function organizersVotedEventResult() internal constant returns (bool) {
-        for(uint i = 0; i < organizers.length; i++) {
-            OrganizerStatus organizerStatus = organizerInfo[organizers[i]].status;
-            if(!(organizerStatus == OrganizerStatus.Success || organizerStatus == OrganizerStatus.Failed)) {
-                return false;
+    function clientExists(address client) internal constant returns (bool) {
+        for (uin16 i = 0; i < clients.length; i++) {
+            if (client = clients[i]) {
+                return true;
             }
         }
-        return true;
+        return false;
     }
 }
