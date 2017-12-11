@@ -1,0 +1,239 @@
+{
+  "contractName": "TokenRecipient",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [
+        {
+          "name": "from",
+          "type": "address"
+        },
+        {
+          "name": "to",
+          "type": "address"
+        },
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "value",
+          "type": "uint256"
+        }
+      ],
+      "name": "receiveApproval",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "sourceMap": "",
+  "deployedSourceMap": "",
+  "source": "pragma solidity ^0.4.2;\r\n\r\ncontract TokenRecipient {\r\n    // to be implemented for third party contracts which require to be notified when an allowance has been performed\r\n    // pointing to their address contract.\r\n    function receiveApproval(address from, address to, string id, uint256 value);\r\n}\r\n",
+  "sourcePath": "C:\\Users\\Elias\\Documents\\GitHub\\pae-team-repo\\contracts\\bs-token\\TokenRecipient.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/C/Users/Elias/Documents/GitHub/pae-team-repo/contracts/bs-token/TokenRecipient.sol",
+      "exportedSymbols": {
+        "TokenRecipient": [
+          1810
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".2"
+          ]
+        },
+        "id": 1798,
+        "name": "PragmaDirective",
+        "src": "0:23:11"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": false,
+          "linearizedBaseContracts": [
+            1810
+          ],
+          "name": "TokenRecipient",
+          "scope": 1811
+        },
+        "children": [
+          {
+            "attributes": {
+              "body": null,
+              "constant": false,
+              "implemented": false,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "receiveApproval",
+              "payable": false,
+              "scope": 1810,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "from",
+                      "scope": 1809,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 1799,
+                        "name": "ElementaryTypeName",
+                        "src": "245:7:11"
+                      }
+                    ],
+                    "id": 1800,
+                    "name": "VariableDeclaration",
+                    "src": "245:12:11"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "to",
+                      "scope": 1809,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 1801,
+                        "name": "ElementaryTypeName",
+                        "src": "259:7:11"
+                      }
+                    ],
+                    "id": 1802,
+                    "name": "VariableDeclaration",
+                    "src": "259:10:11"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "id",
+                      "scope": 1809,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "string memory",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "string",
+                          "type": "string storage pointer"
+                        },
+                        "id": 1803,
+                        "name": "ElementaryTypeName",
+                        "src": "271:6:11"
+                      }
+                    ],
+                    "id": 1804,
+                    "name": "VariableDeclaration",
+                    "src": "271:9:11"
+                  },
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "value",
+                      "scope": 1809,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "uint256",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "uint256",
+                          "type": "uint256"
+                        },
+                        "id": 1805,
+                        "name": "ElementaryTypeName",
+                        "src": "282:7:11"
+                      }
+                    ],
+                    "id": 1806,
+                    "name": "VariableDeclaration",
+                    "src": "282:13:11"
+                  }
+                ],
+                "id": 1807,
+                "name": "ParameterList",
+                "src": "244:52:11"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1808,
+                "name": "ParameterList",
+                "src": "296:0:11"
+              }
+            ],
+            "id": 1809,
+            "name": "FunctionDefinition",
+            "src": "220:77:11"
+          }
+        ],
+        "id": 1810,
+        "name": "ContractDefinition",
+        "src": "27:273:11"
+      }
+    ],
+    "id": 1811,
+    "name": "SourceUnit",
+    "src": "0:302:11"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2017-12-11T16:18:49.083Z"
+}

@@ -1,4 +1,4 @@
-import "BSTokenData.sol";
+import "./BSTokenData.sol";
 
 pragma solidity ^0.4.2;
 

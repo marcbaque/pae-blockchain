@@ -1,7 +1,7 @@
 pragma solidity ^0.4.2;
 
-import "Admin.sol";
-import "BSTokenData.sol";
+import "./Admin.sol";
+import "./BSTokenData.sol";
 
 contract BSTokenBanking is Admin {
     BSTokenData public tokenData;

@@ -1,13 +1,13 @@
 pragma solidity ^0.4.15;
 
-import "../ownership/Ownable.sol";
+import "./../ownership/MultiOwnable.sol";
 
 /**
  * @title Pausable
  * @dev Base contract which allows children to implement an emergency stop mechanism.
  */
 
-contract Pausable is Ownable {
+contract Pausable is MultiOwnable {
 
   event Pause();
   event Unpause();

@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
 
-import "PermissionManager.sol";
+import "./PermissionManager.sol";
 
 contract Auth {
     PermissionManager pm;

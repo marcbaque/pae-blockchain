@@ -1,8 +1,8 @@
-import "BSToken.sol";
-import "Token.sol";
-import "BSTokenData.sol";
-import "TokenRecipient.sol";
-import "AuthStoppable.sol";
+import "./BSToken.sol";
+import "./Token.sol";
+import "./BSTokenData.sol";
+import "./TokenRecipient.sol";
+import "./AuthStoppable.sol";
 
 pragma solidity ^0.4.2;
 

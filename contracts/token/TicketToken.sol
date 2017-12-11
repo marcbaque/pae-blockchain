@@ -2,6 +2,7 @@ pragma solidity ^0.4.15;
 
 import './../math/SafeMath.sol';
 import './../lifecycle/Pausable.sol';
+import './TicketTokenData.sol';
 
 /**
  * @title TicketToken
@@ -11,41 +12,32 @@ import './../lifecycle/Pausable.sol';
 contract TicketToken is Pausable {
     using SafeMath for uint16;
 
-    event Resell(address from, uint16 value);
+    TicketTokenData public data;
 
-    uint16 value;
-    uint8 ticketType;
+    function TicketToken(address _admin, address _ticketTokenDataAddress ) MultiOwnable (_admin, msg.sender) {
+        data = TicketTokenData(_ticketTokenDataAddress);
+    }
 
-    uint16 public totalSupply;
-    uint16 internal totalResell;
-    uint16 internal totalUsed;
-    uint16 public cap;
+    function getTotalSupply() constant returns (uint16) {
+        return data.getTotalSupply();
+    }
 
-    mapping(address => uint16) balances;
-    mapping (address => uint16) internal used;
-    mapping (address => uint16) internal allowed;
+    function getCap() constant returns (uint16) {
+        return data.getCap();
+    }
 
-    address[] internal clusterAllowedIndex;
-
-    function TicketToken(uint16 _cap, uint16 _value, uint8 _type, address _owner) {
-        cap = _cap;
-        owner = _owner;
-        subowner = msg.sender;
-        value = _value;
-        ticketType = _type;
-        totalSupply = 0;
-        totalResell = 0;
-        totalUsed = 0;
+    function getValue() constant returns (uint16) {
+        return data.getValue();
     }
 
     /**
      * @dev Gets the balance of the specified address.
-     * @param _owner The address to query the the balance of.
+     * @param _owner The address to query the balance of.
      * @return An uint256 representing the amount of tickets owned by the passed address.
      */
 
     function balanceOf(address _owner) constant returns (uint16 balance) {
-        return balances[_owner];
+        return data.getBalance(_owner);
     }
 
     /**
@@ -54,11 +46,12 @@ contract TicketToken is Pausable {
      * @param _value The amount to be transferred.
      */
 
-     function transfer(address _from, address _to, uint16 _value) public onlySubowner whenNotPaused returns (bool) {
+     function transfer(address _to, uint16 _value) public whenNotPaused returns (bool) {
        require(_to != address(0));
-       require(_value <= balances[_from]);
-       balances[_from] = balances[_from].sub(_value);
-       balances[_to] = balances[_to].add(_value);
+       require(_value <= data.getBalance(msg.sender));
+       data.setBalance(msg.sender, data.getBalance(msg.sender).sub(_value));
+       if (data.getBalance(msg.sender) < data.getAllowed(msg.sender)) data.setAllowed(msg.sender, data.getBalance(msg.sender));
+       data.setBalance(_to, data.getBalance(_to).sub(_value));
        return true;
      }
 
@@ -71,12 +64,10 @@ contract TicketToken is Pausable {
 
      function transferFrom(address _from, address _to, uint16 _value) onlySubowner whenNotPaused returns (bool success) {
          require(_to != address(0));
-         require(_value <= allowed[_from]);
-         require(_value <= balances[_from]);
-         balances[_from] = balances[_from].sub(_value);
-         allowed[_from] = allowed[_from].sub(_value);
-         balances[_to] = balances[_to].add(_value);
-         Resell(_from, _value);
+         require(_value <= data.getAllowed(_from));
+         data.setBalance(_from, data.getBalance(_from).sub(_value));
+         data.setAllowed(_from, data.getAllowed(_from).sub(_value));
+         data.setBalance(_to, data.getBalance(_to).add(_value));
          return true;
      }
 
@@ -84,11 +75,11 @@ contract TicketToken is Pausable {
        * @dev Approve the passed address to resell the specified amount of tokens.
        */
 
-       function approve(address _from, uint16 _value) public onlySubowner whenNotPaused returns (bool) {
-           require(_value <= balances[_from]);
-           if (allowed[_from] == 0) { clusterAllowedIndex.push(_from); }
-           allowed[_from] = _value;
-           totalResell += _value;
+       function approve(uint16 _value) public whenNotPaused returns (bool) {
+           require(_value <= data.getBalance(msg.sender));
+           if (data.getAllowed(msg.sender) == 0) data.setAllowedIndex(msg.sender);
+           data.setAllowed(msg.sender, data.getAllowed(msg.sender) + _value);
+           data.setTotalResell(data.getTotalResell() + 1);
            return true;
        }
 
@@ -99,24 +90,24 @@ contract TicketToken is Pausable {
         */
 
        function allowance(address _owner) public view returns (uint256) {
-           return allowed[_owner];
+           return data.getAllowed(_owner);
        }
 
       function assignTickets(address _to, uint16 _number) public onlySubowner whenNotPaused {
-          require(cap - totalSupply + totalResell >= _number);
+          require(data.getCap() - data.getTotalSupply() + data.getTotalResell() >= _number);
           while (_number > 0) {
-            if((totalSupply + 1) <= cap) {
-                balances[_to] += 1;
-                totalSupply += 1;
+            if((data.getTotalSupply() + 1) <= data.getCap()) {
+                data.setBalance(_to, data.getBalance(_to) + 1);
+                data.setTotalSupply(data.getTotalSupply() + 1);
                 _number -= 1;
             } else {
-                for(uint256 i = 0; i < clusterAllowedIndex.length; i++) {
-                    if(allowance(clusterAllowedIndex[i]) > 0) {
-                        transferFrom(clusterAllowedIndex[i], _to, 1);
-                        i -= 1; _number-=1; totalResell -= 1;
+                for(uint16 i = 0; i < data.getAllowedClusterSize(); i++) {
+                    if(data.getAllowed(data.getAllowedIndexAt(i)) > 0) {
+                        transferFrom(data.getAllowedIndexAt(i), _to, 1);
+                        i -= 1; _number-=1; data.setTotalResell(data.getTotalResell() - 1);
                         if (_number == 0) break;
                     } else {
-                        delete clusterAllowedIndex[i];
+                        data.deleteAllowedIndexAt(i);
                     }
                 }
             }
@@ -127,12 +118,22 @@ contract TicketToken is Pausable {
        * @dev Function to use a owned ticket.
        */
 
-      function useTicket() whenNotPaused {
-          require(balances[tx.origin] > 0);
-          balances[tx.origin] -= 1;
-          if (allowed[tx.origin] > balances[tx.origin]) allowed[msg.sender] = balances[tx.origin];
-          totalUsed += 1;
-
+      function useTicket(uint16 _number) whenNotPaused {
+          require(data.getBalance(msg.sender).sub(_number) > 0);
+          data.setBalance(msg.sender, data.getBalance(msg.sender) - 1);
+          if (data.getBalance(msg.sender) < data.getAllowed(msg.sender)) data.setAllowed(msg.sender, data.getBalance(msg.sender));
       }
+
+      /**
+       * @dev Function to complain via 'Red Button'
+       * @param _sender defines the identity complaining.
+       * @return uint16 the number of tickets the identity owns.
+       */
+
+       function redButton(address _sender) public onlySubowner whenNotPaused returns (uint16) {
+           require(data.getBalance(_sender) + data.getUsed(_sender) > 0);
+           data.setRedButton(msg.sender, data.getBalance(_sender) + data.getUsed(_sender));
+           return data.getRedButton(msg.sender);
+       }
 
 }

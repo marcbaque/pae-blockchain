@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
 
-import "Auth.sol";
+import "./Auth.sol";
 
 contract AuthStoppable is Auth {
     bool public emergency;

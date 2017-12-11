@@ -1,0 +1,483 @@
+{
+  "contractName": "Admin",
+  "abi": [],
+  "bytecode": "0x60606040523415600e57600080fd5b603580601b6000396000f3006060604052600080fd00a165627a7a7230582048d0e752e807d54d6e679c917c679561a5fb09abe887763aff232c4f85b2ed850029",
+  "deployedBytecode": "0x6060604052600080fd00a165627a7a7230582048d0e752e807d54d6e679c917c679561a5fb09abe887763aff232c4f85b2ed850029",
+  "sourceMap": "64:289:1:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "64:289:1:-;;;;;",
+  "source": "pragma solidity ^0.4.2;\r\n\r\nimport \"./PermissionManager.sol\";\r\n\r\ncontract Admin {\r\n    PermissionManager pm;\r\n\r\n    modifier onlyAdmin {\r\n        if (!pm.getNetworkAdmin(pm.getRol(msg.sender))) throw;\r\n        _;\r\n    }\r\n\r\n    function init(address permissionManagerAddress) internal {\r\n        pm = PermissionManager(permissionManagerAddress);\r\n    }\r\n}",
+  "sourcePath": "C:\\Users\\Elias\\Documents\\GitHub\\pae-team-repo\\contracts\\bs-token\\Admin.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/C/Users/Elias/Documents/GitHub/pae-team-repo/contracts/bs-token/Admin.sol",
+      "exportedSymbols": {
+        "Admin": [
+          89
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".2"
+          ]
+        },
+        "id": 58,
+        "name": "PragmaDirective",
+        "src": "0:23:1"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 1693,
+          "absolutePath": "/C/Users/Elias/Documents/GitHub/pae-team-repo/contracts/bs-token/PermissionManager.sol",
+          "file": "./PermissionManager.sol",
+          "scope": 90,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 59,
+        "name": "ImportDirective",
+        "src": "27:33:1"
+      },
+      {
+        "attributes": {
+          "baseContracts": [
+            null
+          ],
+          "contractDependencies": [
+            null
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            89
+          ],
+          "name": "Admin",
+          "scope": 90
+        },
+        "children": [
+          {
+            "attributes": {
+              "constant": false,
+              "name": "pm",
+              "scope": 89,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "contract PermissionManager",
+              "value": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "PermissionManager",
+                  "referencedDeclaration": 1692,
+                  "type": "contract PermissionManager"
+                },
+                "id": 60,
+                "name": "UserDefinedTypeName",
+                "src": "86:17:1"
+              }
+            ],
+            "id": 61,
+            "name": "VariableDeclaration",
+            "src": "86:20:1"
+          },
+          {
+            "attributes": {
+              "name": "onlyAdmin",
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 62,
+                "name": "ParameterList",
+                "src": "134:0:1"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "falseBody": null
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "!",
+                          "prefix": true,
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "bool",
+                              "type_conversion": false
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_uint256",
+                                      "typeString": "uint256"
+                                    }
+                                  ],
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "lValueRequested": false,
+                                  "member_name": "getNetworkAdmin",
+                                  "referencedDeclaration": 1667,
+                                  "type": "function (uint256) view external returns (bool)"
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "overloadedDeclarations": [
+                                        null
+                                      ],
+                                      "referencedDeclaration": 61,
+                                      "type": "contract PermissionManager",
+                                      "value": "pm"
+                                    },
+                                    "id": 63,
+                                    "name": "Identifier",
+                                    "src": "150:2:1"
+                                  }
+                                ],
+                                "id": 64,
+                                "name": "MemberAccess",
+                                "src": "150:18:1"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "isConstant": false,
+                                  "isLValue": false,
+                                  "isPure": false,
+                                  "isStructConstructorCall": false,
+                                  "lValueRequested": false,
+                                  "names": [
+                                    null
+                                  ],
+                                  "type": "uint256",
+                                  "type_conversion": false
+                                },
+                                "children": [
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": [
+                                        {
+                                          "typeIdentifier": "t_address",
+                                          "typeString": "address"
+                                        }
+                                      ],
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "getRol",
+                                      "referencedDeclaration": 1647,
+                                      "type": "function (address) view external returns (uint256)"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 61,
+                                          "type": "contract PermissionManager",
+                                          "value": "pm"
+                                        },
+                                        "id": 65,
+                                        "name": "Identifier",
+                                        "src": "169:2:1"
+                                      }
+                                    ],
+                                    "id": 66,
+                                    "name": "MemberAccess",
+                                    "src": "169:9:1"
+                                  },
+                                  {
+                                    "attributes": {
+                                      "argumentTypes": null,
+                                      "isConstant": false,
+                                      "isLValue": false,
+                                      "isPure": false,
+                                      "lValueRequested": false,
+                                      "member_name": "sender",
+                                      "referencedDeclaration": null,
+                                      "type": "address"
+                                    },
+                                    "children": [
+                                      {
+                                        "attributes": {
+                                          "argumentTypes": null,
+                                          "overloadedDeclarations": [
+                                            null
+                                          ],
+                                          "referencedDeclaration": 4626,
+                                          "type": "msg",
+                                          "value": "msg"
+                                        },
+                                        "id": 67,
+                                        "name": "Identifier",
+                                        "src": "179:3:1"
+                                      }
+                                    ],
+                                    "id": 68,
+                                    "name": "MemberAccess",
+                                    "src": "179:10:1"
+                                  }
+                                ],
+                                "id": 69,
+                                "name": "FunctionCall",
+                                "src": "169:21:1"
+                              }
+                            ],
+                            "id": 70,
+                            "name": "FunctionCall",
+                            "src": "150:41:1"
+                          }
+                        ],
+                        "id": 71,
+                        "name": "UnaryOperation",
+                        "src": "149:42:1"
+                      },
+                      {
+                        "children": [],
+                        "id": 72,
+                        "name": "Throw",
+                        "src": "193:5:1"
+                      }
+                    ],
+                    "id": 73,
+                    "name": "IfStatement",
+                    "src": "145:53:1"
+                  },
+                  {
+                    "id": 74,
+                    "name": "PlaceholderStatement",
+                    "src": "209:1:1"
+                  }
+                ],
+                "id": 75,
+                "name": "Block",
+                "src": "134:84:1"
+              }
+            ],
+            "id": 76,
+            "name": "ModifierDefinition",
+            "src": "115:103:1"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "modifiers": [
+                null
+              ],
+              "name": "init",
+              "payable": false,
+              "scope": 89,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "constant": false,
+                      "name": "permissionManagerAddress",
+                      "scope": 88,
+                      "stateVariable": false,
+                      "storageLocation": "default",
+                      "type": "address",
+                      "value": null,
+                      "visibility": "internal"
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "name": "address",
+                          "type": "address"
+                        },
+                        "id": 77,
+                        "name": "ElementaryTypeName",
+                        "src": "240:7:1"
+                      }
+                    ],
+                    "id": 78,
+                    "name": "VariableDeclaration",
+                    "src": "240:32:1"
+                  }
+                ],
+                "id": 79,
+                "name": "ParameterList",
+                "src": "239:34:1"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 80,
+                "name": "ParameterList",
+                "src": "283:0:1"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "contract PermissionManager"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 61,
+                              "type": "contract PermissionManager",
+                              "value": "pm"
+                            },
+                            "id": 81,
+                            "name": "Identifier",
+                            "src": "294:2:1"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": false,
+                              "isStructConstructorCall": false,
+                              "lValueRequested": false,
+                              "names": [
+                                null
+                              ],
+                              "type": "contract PermissionManager",
+                              "type_conversion": true
+                            },
+                            "children": [
+                              {
+                                "attributes": {
+                                  "argumentTypes": [
+                                    {
+                                      "typeIdentifier": "t_address",
+                                      "typeString": "address"
+                                    }
+                                  ],
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 1692,
+                                  "type": "type(contract PermissionManager)",
+                                  "value": "PermissionManager"
+                                },
+                                "id": 82,
+                                "name": "Identifier",
+                                "src": "299:17:1"
+                              },
+                              {
+                                "attributes": {
+                                  "argumentTypes": null,
+                                  "overloadedDeclarations": [
+                                    null
+                                  ],
+                                  "referencedDeclaration": 78,
+                                  "type": "address",
+                                  "value": "permissionManagerAddress"
+                                },
+                                "id": 83,
+                                "name": "Identifier",
+                                "src": "317:24:1"
+                              }
+                            ],
+                            "id": 84,
+                            "name": "FunctionCall",
+                            "src": "299:43:1"
+                          }
+                        ],
+                        "id": 85,
+                        "name": "Assignment",
+                        "src": "294:48:1"
+                      }
+                    ],
+                    "id": 86,
+                    "name": "ExpressionStatement",
+                    "src": "294:48:1"
+                  }
+                ],
+                "id": 87,
+                "name": "Block",
+                "src": "283:67:1"
+              }
+            ],
+            "id": 88,
+            "name": "FunctionDefinition",
+            "src": "226:124:1"
+          }
+        ],
+        "id": 89,
+        "name": "ContractDefinition",
+        "src": "64:289:1"
+      }
+    ],
+    "id": 90,
+    "name": "SourceUnit",
+    "src": "0:353:1"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2017-12-11T16:18:49.043Z"
+}

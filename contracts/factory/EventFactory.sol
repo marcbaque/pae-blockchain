@@ -1,14 +1,14 @@
 pragma solidity ^0.4.18;
 
-import "./Ownable.sol";
-import "./Event.sol";
-import "./TicketToken.sol";
+import "./../ownership/Ownable.sol";
+import "./../event/Event.sol";
+import "./../event/EventData.sol";
 
 contract EventFactory is Ownable {
     
     address[] events;
 
-    event eventCreated(address eventAddress, address owner);
+    event EventCreated(address eventAddress, address owner);
     
     function EventFactory() Ownable(msg.sender) {        
     }
@@ -17,10 +17,10 @@ contract EventFactory is Ownable {
     function createEvent() returns (address) {
                             
         //TODO: Add modifier onlyOrganizers() -> need to have UserFactory?
-
-        Event newEvent = new Event(msg.sender, events.length);
+        EventData eventData = new EventData(events.length);
+        Event newEvent = new Event(owner, msg.sender, eventData);
         events.push(newEvent);
-        eventCreated(newEvent, msg.sender);
+        EventCreated(newEvent, msg.sender);
         return newEvent;
 
 

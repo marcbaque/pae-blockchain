@@ -1,14 +1,14 @@
-import "./BasicUser.sol";
-import "./Organizer.sol";
-import "./Ownable.sol";
+import "./../user/BasicUser.sol";
+import "./../user/Organizer.sol";
+import "./../ownership/Ownable.sol";
 
 contract UserFactory is Ownable {
     
     mapping(bytes32 => address) public idMapUser;
 
     
-    event basicUserCreated(address buAddress, address owner);
-    event organizerCreated(address organizerAddress, address owner);
+    event BasicUserCreated(address buAddress, address owner);
+    event OrganizerCreated(address organizerAddress, address owner);
 
     function UserFactory() Ownable(msg.sender) {
         
@@ -18,14 +18,14 @@ contract UserFactory is Ownable {
         BasicUser bu = new BasicUser(owner, id);
         idMapUser[id] = bu;
 
-        basicUserCreated(bu, owner);
+        BasicUserCreated(bu, owner);
     }
     
     function createOrganizer(bytes32 id) {
         Organizer org = new Organizer(msg.sender, id);
         idMapUser[id] = org;
 
-        organizerCreated(org, msg.sender);
+        OrganizerCreated(org, msg.sender);
     }
     
 }

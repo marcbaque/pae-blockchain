@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
 
-import "Stoppable.sol";
+import "./Stoppable.sol";
 
 contract BSTokenData is Stoppable {
     string public standard = 'BSToken 0.1';

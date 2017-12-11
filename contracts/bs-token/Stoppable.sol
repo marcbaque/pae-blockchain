@@ -1,6 +1,6 @@
 pragma solidity ^0.4.2;
 
-import "Admin.sol";
+import "./Admin.sol";
 
 contract Stoppable is Admin {
     bool public emergency;

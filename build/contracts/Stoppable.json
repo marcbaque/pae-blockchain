@@ -1,0 +1,481 @@
+{
+  "contractName": "Stoppable",
+  "abi": [
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "startEmergency",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": false,
+      "inputs": [],
+      "name": "stopEmergency",
+      "outputs": [],
+      "payable": false,
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "constant": true,
+      "inputs": [],
+      "name": "emergency",
+      "outputs": [
+        {
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "payable": false,
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x6060604052341561000f57600080fd5b6104638061001e6000396000f300606060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630fb7e6021461005c57806397db7edb14610071578063caa6fea414610086575b600080fd5b341561006757600080fd5b61006f6100b3565b005b341561007c57600080fd5b61008461026c565b005b341561009157600080fd5b610099610424565b604051808215151515815260200191505060405180910390f35b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663d16657216000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e53d0546336000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381600087803b15156101b457600080fd5b6102c65a03f115156101c557600080fd5b505050604051805190506000604051602001526040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050602060405180830381600087803b151561022957600080fd5b6102c65a03f1151561023a57600080fd5b50505060405180519050151561024f57600080fd5b6001600060146101000a81548160ff021916908315150217905550565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663d16657216000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e53d0546336000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381600087803b151561036d57600080fd5b6102c65a03f1151561037e57600080fd5b505050604051805190506000604051602001526040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050602060405180830381600087803b15156103e257600080fd5b6102c65a03f115156103f357600080fd5b50505060405180519050151561040857600080fd5b60008060146101000a81548160ff021916908315150217905550565b600060149054906101000a900460ff16815600a165627a7a72305820e42b44b683d705d071cea8ca774b515471d1635f333ea30c65051c4624cb78350029",
+  "deployedBytecode": "0x606060405260043610610057576000357c0100000000000000000000000000000000000000000000000000000000900463ffffffff1680630fb7e6021461005c57806397db7edb14610071578063caa6fea414610086575b600080fd5b341561006757600080fd5b61006f6100b3565b005b341561007c57600080fd5b61008461026c565b005b341561009157600080fd5b610099610424565b604051808215151515815260200191505060405180910390f35b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663d16657216000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e53d0546336000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381600087803b15156101b457600080fd5b6102c65a03f115156101c557600080fd5b505050604051805190506000604051602001526040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050602060405180830381600087803b151561022957600080fd5b6102c65a03f1151561023a57600080fd5b50505060405180519050151561024f57600080fd5b6001600060146101000a81548160ff021916908315150217905550565b6000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663d16657216000809054906101000a900473ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff1663e53d0546336000604051602001526040518263ffffffff167c0100000000000000000000000000000000000000000000000000000000028152600401808273ffffffffffffffffffffffffffffffffffffffff1673ffffffffffffffffffffffffffffffffffffffff168152602001915050602060405180830381600087803b151561036d57600080fd5b6102c65a03f1151561037e57600080fd5b505050604051805190506000604051602001526040518263ffffffff167c010000000000000000000000000000000000000000000000000000000002815260040180828152602001915050602060405180830381600087803b15156103e257600080fd5b6102c65a03f115156103f357600080fd5b50505060405180519050151561040857600080fd5b60008060146101000a81548160ff021916908315150217905550565b600060149054906101000a900460ff16815600a165627a7a72305820e42b44b683d705d071cea8ca774b515471d1635f333ea30c65051c4624cb78350029",
+  "sourceMap": "52:320:9:-;;;;;;;;;;;;;;;;;",
+  "deployedSourceMap": "52:320:9:-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;201:80;;;;;;;;;;;;;;289;;;;;;;;;;;;;;87:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;201:80;150:2:1;;;;;;;;;;;:18;;;169:2;;;;;;;;;;;:9;;;179:10;169:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;150:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;149:42;145:53;;;193:5;;;145:53;269:4:9;257:9;;:16;;;;;;;;;;;;;;;;;;201:80::o;289:::-;150:2:1;;;;;;;;;;;:18;;;169:2;;;;;;;;;;;:9;;;179:10;169:21;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;150:41;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;149:42;145:53;;;193:5;;;145:53;356:5:9;344:9;;:17;;;;;;;;;;;;;;;;;;289:80::o;87:21::-;;;;;;;;;;;;;:::o",
+  "source": "pragma solidity ^0.4.2;\r\n\r\nimport \"./Admin.sol\";\r\n\r\ncontract Stoppable is Admin {\r\n    bool public emergency;\r\n\r\n    modifier stopInEmergency {\r\n        if (emergency) throw;\r\n        _;\r\n    }\r\n\r\n    function startEmergency() external onlyAdmin {\r\n        emergency = true;\r\n    }\r\n\r\n    function stopEmergency() external onlyAdmin {\r\n        emergency = false;\r\n    }\r\n}",
+  "sourcePath": "C:\\Users\\Elias\\Documents\\GitHub\\pae-team-repo\\contracts\\bs-token\\Stoppable.sol",
+  "ast": {
+    "attributes": {
+      "absolutePath": "/C/Users/Elias/Documents/GitHub/pae-team-repo/contracts/bs-token/Stoppable.sol",
+      "exportedSymbols": {
+        "Stoppable": [
+          1727
+        ]
+      }
+    },
+    "children": [
+      {
+        "attributes": {
+          "literals": [
+            "solidity",
+            "^",
+            "0.4",
+            ".2"
+          ]
+        },
+        "id": 1694,
+        "name": "PragmaDirective",
+        "src": "0:23:9"
+      },
+      {
+        "attributes": {
+          "SourceUnit": 90,
+          "absolutePath": "/C/Users/Elias/Documents/GitHub/pae-team-repo/contracts/bs-token/Admin.sol",
+          "file": "./Admin.sol",
+          "scope": 1728,
+          "symbolAliases": [
+            null
+          ],
+          "unitAlias": ""
+        },
+        "id": 1695,
+        "name": "ImportDirective",
+        "src": "27:21:9"
+      },
+      {
+        "attributes": {
+          "contractDependencies": [
+            89
+          ],
+          "contractKind": "contract",
+          "documentation": null,
+          "fullyImplemented": true,
+          "linearizedBaseContracts": [
+            1727,
+            89
+          ],
+          "name": "Stoppable",
+          "scope": 1728
+        },
+        "children": [
+          {
+            "attributes": {
+              "arguments": [
+                null
+              ]
+            },
+            "children": [
+              {
+                "attributes": {
+                  "contractScope": null,
+                  "name": "Admin",
+                  "referencedDeclaration": 89,
+                  "type": "contract Admin"
+                },
+                "id": 1696,
+                "name": "UserDefinedTypeName",
+                "src": "74:5:9"
+              }
+            ],
+            "id": 1697,
+            "name": "InheritanceSpecifier",
+            "src": "74:5:9"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "name": "emergency",
+              "scope": 1727,
+              "stateVariable": true,
+              "storageLocation": "default",
+              "type": "bool",
+              "value": null,
+              "visibility": "public"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "name": "bool",
+                  "type": "bool"
+                },
+                "id": 1698,
+                "name": "ElementaryTypeName",
+                "src": "87:4:9"
+              }
+            ],
+            "id": 1699,
+            "name": "VariableDeclaration",
+            "src": "87:21:9"
+          },
+          {
+            "attributes": {
+              "name": "stopInEmergency",
+              "visibility": "internal"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1700,
+                "name": "ParameterList",
+                "src": "142:0:9"
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "falseBody": null
+                    },
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "overloadedDeclarations": [
+                            null
+                          ],
+                          "referencedDeclaration": 1699,
+                          "type": "bool",
+                          "value": "emergency"
+                        },
+                        "id": 1701,
+                        "name": "Identifier",
+                        "src": "157:9:9"
+                      },
+                      {
+                        "children": [],
+                        "id": 1702,
+                        "name": "Throw",
+                        "src": "168:5:9"
+                      }
+                    ],
+                    "id": 1703,
+                    "name": "IfStatement",
+                    "src": "153:20:9"
+                  },
+                  {
+                    "id": 1704,
+                    "name": "PlaceholderStatement",
+                    "src": "184:1:9"
+                  }
+                ],
+                "id": 1705,
+                "name": "Block",
+                "src": "142:51:9"
+              }
+            ],
+            "id": 1706,
+            "name": "ModifierDefinition",
+            "src": "117:76:9"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "name": "startEmergency",
+              "payable": false,
+              "scope": 1727,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1707,
+                "name": "ParameterList",
+                "src": "224:2:9"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1710,
+                "name": "ParameterList",
+                "src": "246:0:9"
+              },
+              {
+                "attributes": {
+                  "arguments": [
+                    null
+                  ]
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 76,
+                      "type": "modifier ()",
+                      "value": "onlyAdmin"
+                    },
+                    "id": 1708,
+                    "name": "Identifier",
+                    "src": "236:9:9"
+                  }
+                ],
+                "id": 1709,
+                "name": "ModifierInvocation",
+                "src": "236:9:9"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 1699,
+                              "type": "bool",
+                              "value": "emergency"
+                            },
+                            "id": 1711,
+                            "name": "Identifier",
+                            "src": "257:9:9"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "hexvalue": "74727565",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "subdenomination": null,
+                              "token": "bool",
+                              "type": "bool",
+                              "value": "true"
+                            },
+                            "id": 1712,
+                            "name": "Literal",
+                            "src": "269:4:9"
+                          }
+                        ],
+                        "id": 1713,
+                        "name": "Assignment",
+                        "src": "257:16:9"
+                      }
+                    ],
+                    "id": 1714,
+                    "name": "ExpressionStatement",
+                    "src": "257:16:9"
+                  }
+                ],
+                "id": 1715,
+                "name": "Block",
+                "src": "246:35:9"
+              }
+            ],
+            "id": 1716,
+            "name": "FunctionDefinition",
+            "src": "201:80:9"
+          },
+          {
+            "attributes": {
+              "constant": false,
+              "implemented": true,
+              "isConstructor": false,
+              "name": "stopEmergency",
+              "payable": false,
+              "scope": 1727,
+              "stateMutability": "nonpayable",
+              "superFunction": null,
+              "visibility": "external"
+            },
+            "children": [
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1717,
+                "name": "ParameterList",
+                "src": "311:2:9"
+              },
+              {
+                "attributes": {
+                  "parameters": [
+                    null
+                  ]
+                },
+                "children": [],
+                "id": 1720,
+                "name": "ParameterList",
+                "src": "333:0:9"
+              },
+              {
+                "attributes": {
+                  "arguments": [
+                    null
+                  ]
+                },
+                "children": [
+                  {
+                    "attributes": {
+                      "argumentTypes": null,
+                      "overloadedDeclarations": [
+                        null
+                      ],
+                      "referencedDeclaration": 76,
+                      "type": "modifier ()",
+                      "value": "onlyAdmin"
+                    },
+                    "id": 1718,
+                    "name": "Identifier",
+                    "src": "323:9:9"
+                  }
+                ],
+                "id": 1719,
+                "name": "ModifierInvocation",
+                "src": "323:9:9"
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "attributes": {
+                          "argumentTypes": null,
+                          "isConstant": false,
+                          "isLValue": false,
+                          "isPure": false,
+                          "lValueRequested": false,
+                          "operator": "=",
+                          "type": "bool"
+                        },
+                        "children": [
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "overloadedDeclarations": [
+                                null
+                              ],
+                              "referencedDeclaration": 1699,
+                              "type": "bool",
+                              "value": "emergency"
+                            },
+                            "id": 1721,
+                            "name": "Identifier",
+                            "src": "344:9:9"
+                          },
+                          {
+                            "attributes": {
+                              "argumentTypes": null,
+                              "hexvalue": "66616c7365",
+                              "isConstant": false,
+                              "isLValue": false,
+                              "isPure": true,
+                              "lValueRequested": false,
+                              "subdenomination": null,
+                              "token": "bool",
+                              "type": "bool",
+                              "value": "false"
+                            },
+                            "id": 1722,
+                            "name": "Literal",
+                            "src": "356:5:9"
+                          }
+                        ],
+                        "id": 1723,
+                        "name": "Assignment",
+                        "src": "344:17:9"
+                      }
+                    ],
+                    "id": 1724,
+                    "name": "ExpressionStatement",
+                    "src": "344:17:9"
+                  }
+                ],
+                "id": 1725,
+                "name": "Block",
+                "src": "333:36:9"
+              }
+            ],
+            "id": 1726,
+            "name": "FunctionDefinition",
+            "src": "289:80:9"
+          }
+        ],
+        "id": 1727,
+        "name": "ContractDefinition",
+        "src": "52:320:9"
+      }
+    ],
+    "id": 1728,
+    "name": "SourceUnit",
+    "src": "0:372:9"
+  },
+  "compiler": {
+    "name": "solc",
+    "version": "0.4.18+commit.9cf6e910.Emscripten.clang"
+  },
+  "networks": {},
+  "schemaVersion": "1.0.1",
+  "updatedAt": "2017-12-11T16:18:49.062Z"
+}

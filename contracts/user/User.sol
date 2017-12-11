@@ -1,4 +1,4 @@
-import "./Ownable.sol";
+import "./../ownership/Ownable.sol";
 
 contract User is Ownable {
     
