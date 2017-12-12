@@ -57,26 +57,9 @@ contract Event is MultiOwnable {
        data.addTicket(address(ticketToken));
     }
 
-
-
-
-
-
-
-
     function getEventStatus() returns (uint8) {
         return data.getEventStatus();
     }
-
-
-
-
-
-
-
-
-
-
 
     /**
      * @dev Gets the count of ticket types of the event.
