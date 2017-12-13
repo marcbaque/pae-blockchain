@@ -1,118 +1,126 @@
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.18;
 
-import "./../ownership/Ownable.sol";
+
+import "../ownership/Ownable.sol";
+
 
 contract TicketTokenData is Ownable {
 
-     /* Only logic contracts can interactuate with the token data */
-     mapping(address => bool) logics;
+    /* TicketToken basic information (constant) */
+    uint16 public value;                   /* value: the price of each ticket. */
+    uint8 public ticketType;               /* ticketType: the type of ticket. */
+    uint16 public cap;                     /* cap: maximum number of tickets. */
 
-     /* TicketToken basic information (constant) */
-     uint16 public value;                   /* value: the price of each ticket. */
-     uint8 public ticketType;               /* ticketType: the type of ticket. */
-     uint16 public cap;                     /* cap: maximum number of tickets. */
+    /* State variables (variable) */
+    uint16 public totalSupply = 0;             /* totalSupply: number of tickets sold. */
+    uint16 public totalResell = 0;             /* totalResell: number of tickets to resell. */
 
-     /* State variables (variable) */
-     uint16 public totalSupply = 0;             /* totalSupply: number of tickets sold. */
-     uint16 public totalResell = 0;             /* totalResell: number of tickets to resell. */
+    address[] public clients;
 
-     mapping(address => uint16) balances;                   /* balances: (who, available tickets) */
-     mapping (address => uint16) internal used;             /* used: (who, used tickets) */
-     mapping (address => uint16) internal redButton;        /* used: (who, used tickets) */
-     mapping (address => uint16) internal allowed;          /* allowed: (who, resalable tickets) */
+    mapping (address => uint16) balances;                   /* balances: (who, available tickets) */
+    mapping (address => uint16) internal used;             /* used: (who, used tickets) */
+    mapping (address => uint16) internal redButton;        /* used: (who, used tickets) */
+    mapping (address => uint16) internal allowed;          /* allowed: (who, resalable tickets) */
 
-     address[] internal clusterAllowedIndex;                /* Auxiliar to store the "Resellers" */
+    address[] internal clusterAllowedIndex;                /* Auxiliar to store the "Resellers" */
 
 
-     function TicketTokenData(uint16 _cap, uint16 _value, uint8 _type) Ownable (msg.sender) {
+    function TicketTokenData(uint16 _cap, uint16 _value, uint8 _type) public Ownable(msg.sender) {
         value = _value;
         cap = _cap;
         ticketType = _type;
-     }
+    }
 
-     modifier onlyLogic () {
-        require(logics[msg.sender]);
-        _;
-     }
-
-    function getCap() constant returns (uint16) {
+    function getCap() public constant returns (uint16) {
         return cap;
     }
 
-    function getType() constant returns (uint8) {
-         return ticketType;
-     }
+    function getType() public constant returns (uint8) {
+        return ticketType;
+    }
 
-     function getValue() constant returns (uint16) {
-         return value;
-     }
+    function getValue() public constant returns (uint16) {
+        return value;
+    }
 
-     function getTotalSupply() constant returns (uint16) {
-         return totalSupply;
-     }
+    function getTotalSupply() public constant returns (uint16) {
+        return totalSupply;
+    }
 
-     function setTotalSupply(uint16 _number) onlyLogic {
-         totalSupply=_number;
-     }
+    function setTotalSupply(uint16 _number) public onlyOwner {
+        totalSupply = _number;
+    }
 
-     function getTotalResell() constant returns (uint16) {
-         return totalResell;
-     }
+    function getTotalResell() public constant returns (uint16) {
+        return totalResell;
+    }
 
-     function setTotalResell(uint16 _number) onlyLogic {
-         totalResell=_number;
-     }
+    function setTotalResell(uint16 _number) public onlyOwner {
+        totalResell = _number;
+    }
 
-     function getBalance(address _addr) returns (uint16) {
+    function getBalance(address _addr) public constant returns (uint16) {
         return balances[_addr];
-     }
+    }
 
-     function setBalance(address _addr, uint16 _balance) onlyLogic {
+    function setBalance(address _addr, uint16 _balance) public onlyOwner {
         balances[_addr] = _balance;
-     }
+        if (!containsElement(clients, _addr)) clients.push(_addr);
+    }
 
-     function getUsed(address _addr) constant returns (uint16) {
+    function getUsed(address _addr) public constant returns (uint16) {
         return used[_addr];
-     }
+    }
 
-     function setUsed(address addr, uint16 _quantity) onlyLogic {
+    function setUsed(address addr, uint16 _quantity) public onlyOwner {
         used[addr] = _quantity;
-     }
+    }
 
-     function getRedButton(address _addr) constant returns (uint16) {
+    function getRedButton(address _addr) public constant returns (uint16) {
         return redButton[_addr];
-     }
+    }
 
-     function setRedButton(address addr, uint16 _quantity) onlyLogic {
+    function setRedButton(address addr, uint16 _quantity) public onlyOwner {
         redButton[addr] = _quantity;
-     }
+    }
 
-     function getAllowed(address _addr) constant returns (uint16) {
+    function getAllowed(address _addr) public constant returns (uint16) {
         return used[_addr];
-     }
+    }
 
-     function setAllowed(address _addr, uint16 _quantity) onlyLogic {
+    function setAllowed(address _addr, uint16 _quantity) public onlyOwner {
         used[_addr] = _quantity;
-     }
+    }
 
-     function getAllowedClusterSize() constant returns (uint) {
+    function getAllowedClusterSize() public constant returns (uint) {
         return clusterAllowedIndex.length;
-     }
+    }
 
-     function getAllowedIndexAt (uint16 i) constant returns (address){
+    function getAllowedIndexAt(uint16 i) public constant returns (address){
         return clusterAllowedIndex[i];
-     }
+    }
 
-     function setAllowedIndex (address _addr) constant onlyLogic {
+    function setAllowedIndex(address _addr) public onlyOwner {
         clusterAllowedIndex.push(_addr);
-     }
+    }
 
-     function deleteAllowedIndexAt (uint16 i) onlyLogic {
-         delete clusterAllowedIndex[i];
-     }
+    function deleteAllowedIndexAt(uint16 i) public onlyOwner {
+        delete clusterAllowedIndex[i];
+    }
 
-     function addLogic(address logic) onlyOwner {
-             logics[logic] = true;
-     }
+    function getClientAt(uint16 i) public constant returns (address) {
+        return clients[i];
+    }
 
+    function getNumberClients() public constant returns (uint) {
+        return clients.length;
+    }
+
+
+    function containsElement(address[] array, address element) internal returns (bool found) {
+        for (uint i = 0; i < array.length && !found; ++i) {
+            if (array[i] == element) return true;
+        }
+        return false;
+    }
 }

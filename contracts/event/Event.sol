@@ -1,19 +1,30 @@
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.18;
 
-import "./../ownership/Ownable.sol";
-import "./../token/TicketToken.sol";
+import "../ownership/Ownable.sol";
+import "../token/TicketToken.sol";
+import "../token/TicketTokenFactory.sol";
+import "../bs-token/BSTokenFrontend.sol";
 import "./EventData.sol";
 
-contract Event is MultiOwnable {
+contract Event is Pausable {
 
     EventData data;
+    address ticketTokenFactory;
+    address bsTokenFrontend;
 
-    function Event(address _owner, address _subowner, EventData _eventData) MultiOwnable(_owner, _subowner) public {
-        data = _eventData;
+    function Event(address _owner, address _ticketTokenFactory, address _bsTokenFrontend, address _organizer, uint16 _percentage, uint _id) Ownable(_owner) public {
+        data = new EventData(_id, _organizer, _percentage);
+        ticketTokenFactory = _ticketTokenFactory;
+        bsTokenFrontend = _bsTokenFrontend;
     }
 
-    // Events for testing purposes
-    event organizerInfoTest(uint id, address organizerAddress, uint status, uint16 percentage);
+    function getOrganizerAt(uint16 i) public constant returns (address) {
+        return data.getOrganizerAt(i);
+    }
+
+    function getStatus() public constant returns (uint16) {
+        return data.getEventStatus();
+    }
 
     /**
      * @dev Initializes the date and the duration of the event.
@@ -23,7 +34,7 @@ contract Event is MultiOwnable {
      * @param _duration duration of the event.
      */
 
-    function initializeDate(uint _date, uint _duration)  public onlySubowner onlyWhen(0) {
+    function initializeDate(uint _date, uint _duration) public onlyOrganizer onlyWhen(0) whenNotPaused {
         data.setDate(_date);
         data.setDuration(_duration);
     }
@@ -36,9 +47,8 @@ contract Event is MultiOwnable {
      * @param _percentage is the percentage of money a organizer will recive of the total benefit.
      */
 
-    function addOrganizer(address _organizerAddress, uint16 _percentage) public onlySubowner onlyWhen(0) {
+    function addOrganizer(address _organizerAddress, uint16 _percentage) public onlyOrganizer onlyWhen(0) whenNotPaused {
         data.addOrganizer(_organizerAddress, _percentage);
-        addSubowner(_organizerAddress);
     }
 
     /**
@@ -50,15 +60,8 @@ contract Event is MultiOwnable {
      * @param _quantity is the amount of tickets to create.
      */
 
-    function addTicket(uint8 _ticketType, uint16 _price, uint16 _quantity) public onlySubowner onlyWhen(0) {
-       TicketTokenData ticketTokenData = new TicketTokenData(_quantity, _price, _ticketType);
-       TicketToken ticketToken = new TicketToken(owner, ticketTokenData);
-       ticketTokenData.addLogic(address(ticketToken));
-       data.addTicket(address(ticketToken));
-    }
-
-    function getEventStatus() returns (uint8) {
-        return data.getEventStatus();
+    function addTicket(uint8 _ticketType, uint16 _price, uint16 _quantity) public onlyOrganizer onlyWhen(0) whenNotPaused {
+       data.addTicket(TicketTokenFactory(ticketTokenFactory).createTicketToken(_ticketType,_price,_quantity));
     }
 
     /**
@@ -86,9 +89,12 @@ contract Event is MultiOwnable {
      * - The user must have allowed Event to withdraw the amount of money required.
      */
 
-    function buyTickets(uint8 ticketType, uint8 amount) public onlyWhen(1) {
-        /* (BSTOKEN) transferFrom(msg.sender, this, ticketIndex[ticketType].data.getValue()); */
-        TicketToken(data.getTicketAt(ticketType)).assignTickets(msg.sender, amount);
+    function buyTickets(uint8 _ticketType, uint8 _amount) public onlyWhen(1) whenNotPaused {
+        TicketToken _ticketToken = TicketToken(data.getTicketAt(_ticketType));
+        uint256 totalPrice = _ticketToken.getValue() * _amount;
+        BSTokenFrontend(bsTokenFrontend).transferFrom(msg.sender, this, totalPrice);
+        TicketToken(data.getTicketAt(_ticketType)).assignTickets(msg.sender, _amount);
+        data.addTotalTickets(_amount);
     }
 
     /**
@@ -96,8 +102,10 @@ contract Event is MultiOwnable {
      * - onlyOwner only accesible by the tickets.
      */
 
-    function refundAResell(address _to, uint16 _quantity, uint8 ticketType) public onlyTicket {
-        /* (BSTOKEN) approve(this, _to, tickets[ticketType].data.getValue() * _quantity); */
+    function refundAResell(address _to, uint16 _quantity, uint8 _ticketType) public onlyTicket whenNotPaused {
+        TicketToken _ticketToken = TicketToken(data.getTicketAt(_ticketType));
+        uint totalPrice = _ticketToken.getValue() * _quantity;
+        BSTokenFrontend(bsTokenFrontend).approve(_to, totalPrice);
     }
 
     /**
@@ -107,7 +115,7 @@ contract Event is MultiOwnable {
      * - only accessible when the organizer status is "Status.Pending"
      */
 
-    function accept() public onlySubowner onlyWhen(0) {
+    function accept() public onlyOrganizer onlyWhen(0) whenNotPaused {
         var (organizerStatus, percentage) = data.getOrganizerInfo(msg.sender);
         require(organizerStatus == 0);
         data.setOrganizerInfo(msg.sender, 1, percentage);
@@ -121,7 +129,7 @@ contract Event is MultiOwnable {
      * - onlyWhenRange only accessible when event is "Status.Pending" or "Status.Accepted"
      */
 
-    function cancel() onlySubowner public onlyWhenRange([0, 1]) {
+    function cancel() public onlyOrganizer onlyWhenRange([0, 1]) whenNotPaused {
         data.setEventStatus(8);
         activeRefund();
     }
@@ -132,7 +140,7 @@ contract Event is MultiOwnable {
      * - onlyWhen only accessible when event is "Status.Accepted"
      */
 
-    function open() public onlySubowner onlyWhen(1) {
+    function open() public onlyOrganizer onlyWhen(1) whenNotPaused {
         data.setEventStatus(2);
     }
 
@@ -142,7 +150,7 @@ contract Event is MultiOwnable {
      * - onlyWhenRange only accessible when event is "Status.Accepted" or "Status.Opened"
      */
 
-    function start() public onlyOwner onlyWhenRange([1,2]) {
+    function start() public onlyOwner onlyWhenRange([1,2]) whenNotPaused {
         data.setEventStatus(3);
     }
 
@@ -156,7 +164,7 @@ contract Event is MultiOwnable {
         for (uint8 i = 0; i < data.getNumberTickets(); i++) {
             redButtonCount += TicketToken(data.getTicketAt(i)).redButton(msg.sender);
         }
-        data.redButtonPressed(redButtonCount);
+        data.addRedButton(redButtonCount);
     }
 
     /**
@@ -165,7 +173,7 @@ contract Event is MultiOwnable {
      * - onlyWhen only accessible when event is "Status.OnGoing".
      */
 
-    function end() public onlyOwner onlyWhen(3) {
+    function end() public onlyOwner onlyWhen(3) whenNotPaused {
         data.setEventStatus(4);
     }
 
@@ -175,7 +183,7 @@ contract Event is MultiOwnable {
      * - onlyWhen only accessible when event is "Status.Finished".
      */
 
-    function evaluate(bool eventSuccess) public onlySubowner onlyWhen(4) {
+    function evaluate(bool eventSuccess) public onlyOrganizer onlyWhen(4) {
         var (organizerStatus, percentage) = data.getOrganizerInfo(msg.sender);
         if (eventSuccess) data.setOrganizerInfo(msg.sender, 2, percentage);
         else data.setOrganizerInfo(msg.sender, 3, percentage);
@@ -191,9 +199,10 @@ contract Event is MultiOwnable {
         bool organizersEvaluationSuccess = organizersMatch(2);
         bool organizersEvaluationFailed = organizersMatch(3);
         bool clientsEvaluation = (data.getTotalTickets() - data.getRedButtonCount()) <= (data.getTotalTickets()/4);
-        if (organizersEvaluationFailed) { data.setEventStatus(6); activeRefund(); pauseTickets(); }
+        if (organizersEvaluationFailed) { data.setEventStatus(6); activeRefund(); }
         else if (organizersEvaluationSuccess && clientsEvaluation) { data.setEventStatus(5); activePayment(); }
         else data.setEventStatus(7);
+        pauseTickets();
     }
 
     /**
@@ -203,29 +212,8 @@ contract Event is MultiOwnable {
      */
 
     function resolveFrozen(bool success) public onlyOwner onlyWhen(7) {
-        if (success) { data.setEventStatus(5); activePayment(); }
+        if (success) { data.setEventStatus(5); activePayment();  }
         else { data.setEventStatus(6); activeRefund(); }
-    }
-
-    /**
-     * @dev Allows external action (for example,a test), to retrieve the info about the organizers of the
-     * event via a solidity event.
-     * - The event contains for each organizer: its number (for testing purposes), address, status and percentage
-     */
-
-    function testGetOrganizersInfo() {
-
-        for (uint8 i = 0; i < data.getNumberOrganizers(); i++) {
-            address org = data.getOrganizerAt(i);
-            uint status;
-            uint16 percentage;
-            (status, percentage) = data.getOrganizerInfo(org);
-            organizerInfoTest(i, org, status, percentage);
-        }
-    }
-
-    function unpauseTickets() public onlyOwner {
-        for(uint8 i = 0; i < data.getNumberTickets(); i++) (TicketToken(data.getTicketAt(i)).unpause());
     }
 
     modifier onlyWhen(uint8 evStatus) {
@@ -234,15 +222,15 @@ contract Event is MultiOwnable {
     }
 
     modifier onlyWhenRange(uint8 [2] evStatus) {
-        for(uint8 i = 0; i < evStatus.length; i++)
-            require(data.getEventStatus() == evStatus[i]);
+        bool found = false;
+        for(uint8 i = 0; i < evStatus.length; i++) {
+            found = (evStatus[i] == data.getEventStatus());
+            if (found) break;
+        }
+        require(found);
         _;
     }
 
-    modifier onlySelfcall(){
-        require(msg.sender == address(this));
-        _;
-    }
 
     modifier onlyTicket() {
         bool found = false;
@@ -254,7 +242,17 @@ contract Event is MultiOwnable {
         _;
     }
 
-    function organizersMatch(uint8 status) internal constant onlySelfcall returns (bool) {
+    modifier onlyOrganizer() {
+        bool found = false;
+        for (uint i = 0; i < data.getNumberOrganizers(); i++) {
+            found = (data.getOrganizerAt(i) == msg.sender);
+            if (found) break;
+        }
+        require(found);
+        _;
+    }
+
+    function organizersMatch(uint8 status) internal constant returns (bool) {
         for (uint i = 0; i < data.getNumberOrganizers(); i++) {
             var (organizerStatus,) = data.getOrganizerInfo(data.getOrganizerAt(i));
             if (organizerStatus != status) return false;
@@ -262,16 +260,43 @@ contract Event is MultiOwnable {
         return true;
     }
 
-    function activePayment() internal onlySelfcall onlyWhen(5) {
-        /* foreach subowner, allowance (this, subowneraddress, totalmoney*percentage); */
+    function activePayment() internal onlyWhen(5) whenNotPaused {
+        uint totalMoney = 0;
+        uint totalTickets = data.getNumberTickets();
+        uint totalOrganizers = data.getNumberOrganizers();
+        uint i;
+        for (i = 0; i < totalTickets; ++i) {
+            TicketToken _ticketToken = TicketToken(data.getTicketAt(i));
+            uint16 _value = _ticketToken.getValue();
+            uint16 _totalSupply = _ticketToken.getTotalSupply();
+            totalMoney += _totalSupply * _value;
+        }
+
+        for (i = 0; i < totalOrganizers; ++i) {
+            address orgAddress = data.getOrganizerAt(i);
+            var (organizerStatus, percentage) = data.getOrganizerInfo(orgAddress);
+            BSTokenFrontend(bsTokenFrontend).approve(orgAddress, totalMoney * percentage);
+        }
     }
 
-    function activeRefund() internal onlySelfcall {
+    function activeRefund() internal whenNotPaused {
         require(data.getEventStatus() == 6 || data.getEventStatus() == 8);
-        /* foreach ticket, foreach client: allowance (this, clientaddress, value*balance); */
+
+        uint totalTickets = data.getNumberTickets();
+        for (uint i = 0; i < totalTickets; ++i) {
+            TicketToken _ticketToken = TicketToken(data.getTicketAt(i));
+            uint16 _value = _ticketToken.getValue();
+
+            uint numClients = _ticketToken.getNumberClients();
+            for (uint16 j = 0; j < numClients; ++j) {
+                address client = _ticketToken.getClientAt(j);
+                uint256 totalMoney = _value * _ticketToken.balanceOf(client);
+                BSTokenFrontend(bsTokenFrontend).approve(client, totalMoney);
+            }
+        }
     }
 
-    function pauseTickets() internal onlySelfcall {
+    function pauseTickets() internal  {
         for(uint8 i = 0; i < data.getNumberTickets(); i++) (TicketToken(data.getTicketAt(i)).pause());
     }
 
