@@ -1,7 +1,9 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
-import './../math/SafeMath.sol';
-import './../lifecycle/Pausable.sol';
+import '../math/SafeMath.sol';
+import '../lifecycle/Pausable.sol';
+// import '../token/TicketTokenData.sol';
+// import '../token/ERC20.sol';
 
 /**
  * @title TicketToken
@@ -9,130 +11,178 @@ import './../lifecycle/Pausable.sol';
  */
 
 contract TicketToken is Pausable {
+
     using SafeMath for uint16;
-
-    event Resell(address from, uint16 value);
-
-    uint16 value;
-    uint8 ticketType;
-
-    uint16 public totalSupply;
-    uint16 internal totalResell;
-    uint16 internal totalUsed;
-    uint16 public cap;
-
-    mapping(address => uint16) balances;
-    mapping (address => uint16) internal used;
-    mapping (address => uint16) internal allowed;
-
-    address[] internal clusterAllowedIndex;
-
-    function TicketToken(uint16 _cap, uint16 _value, uint8 _type, address _owner) {
-        cap = _cap;
-        owner = _owner;
-        subowner = msg.sender;
-        value = _value;
-        ticketType = _type;
-        totalSupply = 0;
-        totalResell = 0;
-        totalUsed = 0;
+    struct TicketInfo {
+        uint8 ticketType;
+        uint16 totalAmount;
+        uint16 price;
     }
 
-    /**
-     * @dev Gets the balance of the specified address.
-     * @param _owner The address to query the the balance of.
-     * @return An uint256 representing the amount of tickets owned by the passed address.
-     */
+    TicketInfo ticketInfo;
 
-    function balanceOf(address _owner) constant returns (uint16 balance) {
+//borrar
+    address public thisAddress;
+
+    address[] resellList;
+    address[] clients;
+    uint16 public ticketsToResell = 0;
+    mapping (address => uint16) used;
+    mapping (address => bool) pressedRedButton; 
+    uint16 redButtonCounter = 0;
+
+    mapping (address => uint16) balances;
+    mapping (address => mapping (address => uint16)) public allowed;
+
+
+    function TicketToken(address _event, uint8 _type, uint16 _amount, uint16 _price) public Pausable(_event) {
+        ticketInfo = TicketInfo(_type, _amount, _price);
+        balances[this] = _amount;
+    }
+
+    function getValue() public constant returns (uint16) {
+        return ticketInfo.price;
+    }
+
+    function getTotalSupply() public constant returns (uint16) {
+        return ticketInfo.totalAmount - balances[this];
+    }
+
+    function getRedButtonCounter() public constant returns (uint16) {
+        return redButtonCounter;
+    }
+
+    function getNumberClients() public constant returns (uint) {
+        return clients.length;
+    }
+    
+    function getClientAt(uint16 i) public constant returns (address) {
+        return clients[i];
+    }
+
+    function balanceOf(address _owner) public constant returns (uint16) {
         return balances[_owner];
     }
 
-    /**
-     * @dev transfer token for a specified address
-     * @param _to The address to transfer to.
-     * @param _value The amount to be transferred.
-     */
+    function transfer(address _to, uint16 _value) public returns (bool) {
+        thisAddress = msg.sender;
+        require(_to != 0x0);
+        if (balances[msg.sender] >= _value) {
+            balances[msg.sender] = balances[msg.sender].sub(_value);
+            balances[_to] = balances[_to].add(_value);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-     function transfer(address _from, address _to, uint16 _value) public onlySubowner whenNotPaused returns (bool) {
-       require(_to != address(0));
-       require(_value <= balances[_from]);
-       balances[_from] = balances[_from].sub(_value);
-       balances[_to] = balances[_to].add(_value);
-       return true;
-     }
+    function transferFrom(address _from, address _to, uint16 _value) public returns (bool success) {
+        require(_to != 0x0 && _from != 0x0);
+        if (balances[_from] >= _value && allowed[_from][_to] >= _value) {
+            balances[_to] = balances[_to].sub(_value);
+            balances[_from] = balances[_from].add(_value);
+            allowed[_from][_to] = allowed[_from][_to].sub(_value);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-     /**
-      * @dev Transfer tokens from one address to another
-      * @param _from address The address which you want to send tokens from
-      * @param _to address The address which you want to transfer to
-      * @param _value uint256 the amount of tokens to be transferred
-      */
+    function approve(address _from, address _spender, uint16 _value) public returns (bool) {
+        if (balances[_spender] >= _value) {
+            allowed[_from][_spender] = _value;
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-     function transferFrom(address _from, address _to, uint16 _value) onlySubowner whenNotPaused returns (bool success) {
-         require(_to != address(0));
-         require(_value <= allowed[_from]);
-         require(_value <= balances[_from]);
-         balances[_from] = balances[_from].sub(_value);
-         allowed[_from] = allowed[_from].sub(_value);
-         balances[_to] = balances[_to].add(_value);
-         Resell(_from, _value);
-         return true;
-     }
+    function resell(uint16 _amount) returns (bool){
+        if (balances[msg.sender] - allowed[msg.sender][this] >= _amount) {
+            bool found = false;
+            uint position= 0;
+            (found, position) = containsElement(resellList, msg.sender);
 
-      /**
-       * @dev Approve the passed address to resell the specified amount of tokens.
-       */
+            if (!found) {
+                resellList.push(msg.sender);
+            }    
+            allowed[msg.sender][this].add(_amount);
+            ticketsToResell.add(_amount);
+            assert(ticketsToResell + balances[this] >= ticketInfo.totalAmount);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-       function approve(address _from, uint16 _value) public onlySubowner whenNotPaused returns (bool) {
-           require(_value <= balances[_from]);
-           if (allowed[_from] == 0) { clusterAllowedIndex.push(_from); }
-           allowed[_from] = _value;
-           totalResell += _value;
-           return true;
-       }
-
-       /**
-        * @dev Function to check the amount of tokens that an owner allowed to resell.
-        * @param _owner address The address which owns the funds.
-        * @return A uint256 specifying the amount of tokens still available to resell
-        */
-
-       function allowance(address _owner) public view returns (uint256) {
-           return allowed[_owner];
-       }
-
-      function assignTickets(address _to, uint16 _number) public onlySubowner whenNotPaused {
-          require(cap - totalSupply + totalResell >= _number);
-          while (_number > 0) {
-            if((totalSupply + 1) <= cap) {
-                balances[_to] += 1;
-                totalSupply += 1;
-                _number -= 1;
-            } else {
-                for(uint256 i = 0; i < clusterAllowedIndex.length; i++) {
-                    if(allowance(clusterAllowedIndex[i]) > 0) {
-                        transferFrom(clusterAllowedIndex[i], _to, 1);
-                        i -= 1; _number-=1; totalResell -= 1;
-                        if (_number == 0) break;
-                    } else {
-                        delete clusterAllowedIndex[i];
-                    }
+    function assignTickets(address _to, uint16 _amount) public returns (bool) {
+    
+        if(balances[this] + ticketsToResell > _amount) {
+            if (balances[this] > 0) {
+                if (balances[this] >= _amount) {
+                    this.transfer(_to, _amount);
+                    addClient(_to);
+                    return true;
+                } else {
+                    uint16 sold = balances[this];
+                    transfer(_to, sold);
+                    _amount = _amount.sub(sold);
+                    
+                }
+            } 
+            address clientReselling;
+            for (uint16 i; i < resellList.length && _amount > 0; i++) {
+                clientReselling = resellList[i];
+                if(allowed[clientReselling][this] >= _amount) {
+                    transferFrom(clientReselling, this, _amount);
+                    transfer(_to, _amount);
+                    ticketsToResell = ticketsToResell.sub(_amount);
+                    _amount = _amount.sub(_amount);
+                    //TicketsResold(_resellList[i], _amount);
+                    addClient(_to);
+                    return true;
+                } else if (allowed[clientReselling][this] > 0) {
+                    uint16 resold = allowed[clientReselling][this];
+                    transferFrom(clientReselling, this, resold);
+                    transfer(_to, resold);
+                    _amount = _amount.sub(resold);
+                    ticketsToResell = ticketsToResell.sub(resold);
+                    //TicketsResold(_resellList[i], resold);
                 }
             }
-          }
-      }
+            return false;
+        }
+        
+    }
 
-      /**
-       * @dev Function to use a owned ticket.
-       */
+    function useTicket(uint16 _amount) public returns (bool) {
+        if (balances[msg.sender] >= _amount) {
+            balances[msg.sender] = balances[msg.sender].sub(_amount);
+            used[msg.sender] = used[msg.sender].add(_amount);
+            return true;
+        } else {
+            return false;
+        }
+    }
 
-      function useTicket() whenNotPaused {
-          require(balances[tx.origin] > 0);
-          balances[tx.origin] -= 1;
-          if (allowed[tx.origin] > balances[tx.origin]) allowed[msg.sender] = balances[tx.origin];
-          totalUsed += 1;
+    function redButton(address _from) public returns (uint16) {
+        if (pressedRedButton[_from]) return 0;
+        pressedRedButton[_from] = true;
+        return used[_from];
+        
+    }
 
-      }
+    function addClient(address _client) {
+        bool found = false;
+        uint position= 0;  
+        (found, position) = containsElement(resellList, _client);
+        if(!found) clients.push(_client);
+    }
 
+    function containsElement(address[] array, address element) internal returns (bool found, uint position) {
+        for (uint i = 0; i < array.length && !found; ++i) {
+            if (array[i] == element) return (true,i);
+        }
+        return (false, 0);
+    }
 }

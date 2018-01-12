@@ -14,6 +14,8 @@ contract Pausable is Ownable {
 
   bool public paused = false;
 
+  function Pausable(address _owner) Ownable(_owner) {}
+
   /**
    * @dev Modifier to make a function callable only when the contract is not paused.
    */
@@ -33,7 +35,7 @@ contract Pausable is Ownable {
   /**
    * @dev called by the owner to pause, triggers stopped state
    */
-  function pause() onlySubowner whenNotPaused public {
+  function pause() onlyOwner whenNotPaused public {
     paused = true;
     Pause();
   }

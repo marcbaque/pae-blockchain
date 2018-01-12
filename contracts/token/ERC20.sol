@@ -1,4 +1,4 @@
-pragma solidity ^0.4.15;
+pragma solidity ^0.4.18;
 
 /**
  * @title ERC20
@@ -8,10 +8,10 @@ pragma solidity ^0.4.15;
 
 contract ERC20 {
 
-    function balanceOf(address _owner) constant returns (uint16 balance);
-    function transfer(address _from, address _to, uint16 _value) public onlySubowner whenNotPaused returns (bool) ;
-    function transferFrom(address _from, address _to, uint16 _value) onlySubowner whenNotPaused returns (bool success);
-    function approve(address _from, uint16 _value) public onlySubowner whenNotPaused returns (bool);
+    function balanceOf(address _owner) public constant returns (uint16 balance);
+    function transfer(address _to, uint16 _value) public returns (bool) ;
+    function transferFrom(address _from, address _to, uint16 _value) public returns (bool success);
+    function approve(address _spender, uint16 _value) public returns (bool);
     function allowance(address _owner) public view returns (uint256);
 
 }
